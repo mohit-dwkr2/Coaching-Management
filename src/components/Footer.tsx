@@ -19,7 +19,7 @@ export default function Footer() {
             className="h-8 w-8 md:h-10 md:w-10 object-contain rounded-full border-2 border-black flex-shrink-0"
           />
               </div>
-              Toppers Academy
+              Your Academy
             </div>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto sm:mx-0">
               Empowering students to achieve their academic goals through quality education and expert mentorship since 1985.
@@ -78,7 +78,7 @@ export default function Footer() {
         {/* Bottom Bar: Mobile par stack, Desktop par space-between */}
         <div className="border-t border-slate-800 mt-10 pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-[11px] md:text-sm text-sm" >
           <p className="text-white text-center md:text-left">
-            © {currentYear} Toppers Academy. All rights reserved by Toppers academy  <br /><span className="text-xs md:text-xs py-2 text-gray-400"> Developed by {" "}
+            © {currentYear} Your Academy. All rights reserved by Your academy  <br /><span className="text-xs md:text-xs py-2 text-gray-400"> Developed by {" "}
   <a
     href="https://wa.me/919630955951"
     target="_blank"
