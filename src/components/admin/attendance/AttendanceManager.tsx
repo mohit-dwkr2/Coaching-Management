@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { exportToExcel } from "@/utils/exportExcel";
 import { printTable } from "@/utils/printTable";
 import ExportAttendanceModal from "./ExportAttendanceModal";
-import { CalendarCheck } from "lucide-react";
+import { CalendarCheck, Download, UserCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function AttendanceManager() {
 
@@ -1158,65 +1159,138 @@ export default function AttendanceManager() {
 
 return (
   <div className="w-full space-y-6 animate-in fade-in duration-300">
-    
-    {/* ================= HEADER SECTION (Exact Student Manager Style) ================= */}
-    <header className="relative overflow-hidden bg-white/80 backdrop-blur-xl p-5 sm:p-6 md:p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200/80 space-y-6 transition-all">
 
-      {/* Ambient Background Glow Effects */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-0 right-10 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
+    {/* ================= HEADER SECTION ================= */}
+    <header className="relative overflow-hidden bg-white/90 dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
 
-      {/* Top Header Row: Title & Top Right Actions */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+      {/* Subtle Ambient Glow */}
+      <div className="absolute -top-24 right-10 w-80 h-80 bg-indigo-500/[0.045] rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 left-1/3 w-72 h-72 bg-blue-500/[0.035] rounded-full blur-3xl pointer-events-none" />
 
-        {/* Title & Description */}
-        <div className="flex items-center gap-4">
-          <div className="relative group shrink-0">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl blur-sm opacity-30 group-hover:opacity-60 transition duration-300" />
-            <div className="relative p-3.5 bg-gradient-to-br from-indigo-600 to-blue-600 text-white rounded-2xl shadow-lg shadow-indigo-500/20">
-              <CalendarCheck size={28} strokeWidth={2.2} />
+      <div className="relative p-5 sm:p-6">
+
+        {/* ================= TOP ROW ================= */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+
+          {/* Heading */}
+          <div className="flex items-center gap-4 min-w-0">
+
+            {/* Icon */}
+            <div className="relative shrink-0">
+              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl blur-md opacity-20" />
+
+              <div className="relative h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-br from-indigo-600 to-blue-600 text-white rounded-2xl shadow-lg shadow-indigo-500/20 flex items-center justify-center">
+                <CalendarCheck
+                  size={26}
+                  strokeWidth={2.2}
+                />
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl sm:text-1xl font-black tracking- text-slate-900">
+
+            {/* Title */}
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                 Attendance Manager
               </h1>
-              {/* <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200/80 uppercase tracking-wide">
-                Pro Suite
-              </span> */}
+
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
+                Centralized command center for daily session tracking and logs.
+              </p>
             </div>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-              Centralized command center for daily session tracking and logs.
-            </p>
+
           </div>
+
+
+          {/* ================= ACTION BUTTONS ================= */}
+          <div className="flex items-center gap-2.5 shrink-0">
+
+            {/* Export */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsExportModalOpen(true)}
+              className="h-10 sm:h-11 px-4 sm:px-5 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm text-xs sm:text-sm font-bold transition-all duration-200 active:scale-95 flex items-center gap-2"
+            >
+              <Download
+                size={16}
+                className="text-slate-500 dark:text-slate-400"
+                strokeWidth={2.2}
+              />
+
+              <span>Export Report</span>
+            </Button>
+
+
+            {/* Take Attendance */}
+            <Button
+              type="button"
+              onClick={() => {
+                if (!selectedCourse || !selectedBatch) {
+                  toast.error("Please select course and batch.");
+                  return;
+                }
+
+                setIsDrawerOpen(true);
+              }}
+              disabled={
+                !selectedCourse ||
+                !selectedBatch ||
+                !selectedDate
+              }
+              className="h-10 sm:h-11 px-4 sm:px-5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+            >
+              <UserCheck
+                size={17}
+                strokeWidth={2.2}
+              />
+
+              <span>Take Attendance</span>
+            </Button>
+
+          </div>
+
         </div>
 
-        {/* Filters & Actions Component Header Part */}
-        <AttendanceFilters
-          selectedCourse={selectedCourse}
-          setSelectedCourse={setSelectedCourse}
-          selectedBatch={selectedBatch}
-          setSelectedBatch={setSelectedBatch}
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          courses={courses}
-          batches={batches.filter(
-            (batch) => !selectedCourse || batch.course_id === selectedCourse
-          )}
-          onTakeAttendance={() => {
-            if (!selectedCourse || !selectedBatch) {
-              toast.error("Please select course and batch.");
-              return;
-            }
-            setIsDrawerOpen(true);
-          }}
-          onExport={() => setIsExportModalOpen(true)}
-        />
+
+        {/* ================= FILTER SECTION ================= */}
+        <div className="mt-5 pt-5 border-t border-slate-100 dark:border-slate-800">
+
+          <AttendanceFilters
+            selectedCourse={selectedCourse}
+            setSelectedCourse={setSelectedCourse}
+            selectedBatch={selectedBatch}
+            setSelectedBatch={setSelectedBatch}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            courses={courses}
+            batches={batches.filter(
+              (batch) =>
+                !selectedCourse ||
+                batch.course_id === selectedCourse
+            )}
+
+            /*
+              Buttons parent mein move kar diye hain,
+              isliye yahan callbacks ki zarurat nahi hai.
+            */
+            onTakeAttendance={() => {
+              if (!selectedCourse || !selectedBatch) {
+                toast.error("Please select course and batch.");
+                return;
+              }
+
+              setIsDrawerOpen(true);
+            }}
+
+            onExport={() => setIsExportModalOpen(true)}
+          />
+
+        </div>
+
       </div>
 
     </header>
+
 
     {/* ================= BOTTOM SECTION: TABLE CARD ================= */}
     <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 sm:p-6">
@@ -1230,15 +1304,18 @@ return (
           setSelectedCourse(session.course_id);
           setSelectedBatch(session.batch_id);
           setSelectedDate(session.attendance_date);
+
           setSelectedSession({
             courseId: session.course_id,
             batchId: session.batch_id,
             attendanceDate: session.attendance_date,
           });
+
           setIsDrawerOpen(true);
         }}
       />
     </div>
+
 
     {/* ================= DRAWERS & MODALS ================= */}
     <AttendanceDrawer

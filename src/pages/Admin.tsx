@@ -17,7 +17,7 @@ import {
 import { toast } from "sonner"
 
 import { supabase } from "@/supabaseClient";
-import BatchManager from "@/components/admin/BatchManager";
+// import BatchManager from "@/components/admin/BatchManager";
 import GalleryManager from "@/components/admin/GalleryManager";
 import StudyMaterialManager from "@/components/admin/StudyMaterialManager";
 import TopperManager from "@/components/admin/TopperManager";
@@ -32,22 +32,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import FeesManager from "@/components/admin/fees/FeesManager"
 import AttendanceSection from "@/components/admin/attendance/AttendanceManager";
 
-const tabs = [
+const managementTabs = [
   { id: "students", label: "Students Manager", icon: AppWindow },
   { id: "fees", label: "Fees Manager", icon: AppWindow },
   { id: "attendance", label: "Attendance Manager", icon: FileText },
+  { id: "notification", label: "Notification Manager", icon: Bell },
+  { id: "material", label: "Study Material", icon: FileText },
+  { id: "videos", label: "Videos Manager", icon: AppWindow },
+  { id: "inbox", label: "Student Inquiries", icon: Inbox },
+] as const;
+
+const websiteTabs = [
   { id: "Hero", label: "Hero Manager", icon: AppWindow },
-  { id: "batches", label: "Batch Manager", icon: BookOpen },
+  // { id: "batches", label: "Batch Manager", icon: BookOpen },
   { id: "faculty", label: "Faculty Manager", icon: User },
   { id: "toppers", label: "Toppers Manager", icon: Trophy },
   { id: "gallery", label: "Gallery Manager", icon: Image },
-  { id: "inbox", label: "Student Inquiries", icon: Inbox },
-  { id: "notification", label: "Notification Manager", icon: Bell },
-  { id: "videos", label: "Videos Manager", icon: AppWindow },
-  { id: "material", label: "Study Material Manager", icon: FileText },
-
 ] as const;
 
+const tabs = [...managementTabs, ...websiteTabs];
 
 
 type Tab = (typeof tabs)[number]["id"];
@@ -65,7 +68,7 @@ interface AdminUser {
 
 
 const panels: Record<Tab, React.FC> = {
-  batches: BatchManager,
+  // batches: BatchManager,
   gallery: GalleryManager,
   material: StudyMaterialManager,
   toppers: TopperManager,
@@ -96,9 +99,9 @@ export default function Admin() {
 
   const navigate = useNavigate();
 
-  const visibleTabs =
+  const visibleManagementTabs =
     currentAdmin?.role === "teacher"
-      ? tabs.filter((tab) =>
+      ? managementTabs.filter((tab) =>
         [
           "attendance",
           "material",
@@ -106,7 +109,12 @@ export default function Admin() {
           "notification",
         ].includes(tab.id)
       )
-      : tabs;
+      : managementTabs;
+
+  const visibleWebsiteTabs =
+    currentAdmin?.role === "teacher"
+      ? []
+      : websiteTabs;
 
   const teacherAllowedTabs = [
     "attendance",
@@ -137,7 +145,7 @@ export default function Admin() {
       return;
     }
 
-   
+
 
     setAdmins(data ?? []);
 
@@ -346,24 +354,66 @@ export default function Admin() {
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {visibleTabs.map((t) => {
-            const IsActive = safeActive === t.id;
 
-            return (
-              <button
-                key={t.id}
-                onClick={() => handleTabChange(t.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${IsActive
-                  ? "bg-primary text-white"
-                  : "text-slate-600 hover:bg-slate-100"
-                  }`}
-              >
-                <t.icon className="h-5 w-5" />
-                {t.label}
-              </button>
-            );
-          })}
+        <nav className="flex-1 p-4 overflow-y-auto">
+
+          {/* MANAGEMENT */}
+          <div className="space-y-2">
+            <p className="px-4 mb-3 text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
+              Management
+            </p>
+
+            {visibleManagementTabs.map((t) => {
+              const IsActive = safeActive === t.id;
+
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => handleTabChange(t.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${IsActive
+                    ? "bg-primary text-white"
+                    : "text-slate-600 hover:bg-slate-100"
+                    }`}
+                >
+                  <t.icon className="h-5 w-5" />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+
+
+          {/* WEBSITE MANAGEMENT */}
+          {visibleWebsiteTabs.length > 0 && (
+            <div className="mt-7 pt-6 border-t border-slate-200">
+
+              <p className="px-4 mb-3 text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
+                Website Management
+              </p>
+
+              <div className="space-y-2">
+                {visibleWebsiteTabs.map((t) => {
+                  const IsActive = safeActive === t.id;
+
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => handleTabChange(t.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${IsActive
+                        ? "bg-primary text-white"
+                        : "text-slate-600 hover:bg-slate-100"
+                        }`}
+                    >
+                      <t.icon className="h-5 w-5" />
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+            </div>
+          )}
+
         </nav>
 
         <div className="p-4 border-t">

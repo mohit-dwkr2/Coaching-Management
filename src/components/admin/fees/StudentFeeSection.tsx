@@ -1,7 +1,7 @@
 import ExportFeesModal from "./ExportFeesModal";
 import { exportToExcel } from "@/utils/exportExcel";
 import { printTable } from "@/utils/printTable";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -74,6 +74,9 @@ const StudentFeeSection = ({
 
   const [assignDrawerOpen, setAssignDrawerOpen] = useState(false);
   const [paymentDrawerOpen, setPaymentDrawerOpen] = useState(false);
+
+  const [analyticsStudentFees, setAnalyticsStudentFees] =
+    useState<StudentFeeData[]>([]);
 
   const [filter, setFilter] = useState<
     "all" | "assigned" | "unassigned" | "overdue" | "partial" | "pending"
@@ -246,6 +249,57 @@ const StudentFeeSection = ({
   }, []);
 
 
+  const fetchAnalyticsStudentFees = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("Coaching-3_StudentFees")
+        .select(`
+        *,
+        student:student_id(
+          id,
+          student_id,
+          name,
+          email,
+          mobile,
+          class,
+          batch_id,
+          course_id,
+          batch:batch_id(
+            id,
+            batch_name,
+            course_id
+          )
+        ),
+        course:course_id(
+          id,
+          course_name
+        ),
+        batch:batch_id(
+          id,
+          batch_name,
+          course_id
+        ),
+        fee_structure:fee_structure_id(
+          *
+        )
+      `)
+        .order("created_at", {
+          ascending: false,
+        });
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (err: any) {
+      toast.error(
+        err.message || "Failed to load analytics fee data."
+      );
+
+      return [];
+    }
+  }, []);
+
+
   const fetchPreviousDues = useCallback(async () => {
     try {
       const currentAcademicYear = getCurrentAcademicYear();
@@ -312,12 +366,14 @@ const StudentFeeSection = ({
     try {
       const [
         latestFees,
+        latestAnalyticsFees,
         latestTransactions,
         latestFeeStructures,
         latestStudents,
         latestPreviousDues,
       ] = await Promise.all([
         fetchStudentFees(),
+        fetchAnalyticsStudentFees(),
         fetchFeeTransactions(),
         fetchFeeStructures(),
         fetchStudents(),
@@ -330,6 +386,9 @@ const StudentFeeSection = ({
       setFeeStructures(latestFeeStructures || []);
       setStudents(latestStudents || []);
       setPreviousDues(latestPreviousDues || []);
+      setAnalyticsStudentFees(
+        latestAnalyticsFees || []
+      );
 
       // Agar drawer open hai to selected fee bhi update karo
       if (selectedFee) {
@@ -356,7 +415,7 @@ const StudentFeeSection = ({
     fetchFeeStructures,
     fetchStudents,
     fetchPreviousDues,
-
+    fetchAnalyticsStudentFees,
   ]);
 
 
@@ -426,6 +485,7 @@ const StudentFeeSection = ({
     return students.filter(
       (student) =>
         student.id &&
+        student.status === "active" &&
         !assignedIds.has(String(student.id))
     );
   }, [students, assignedIds]);
@@ -1466,66 +1526,87 @@ const StudentFeeSection = ({
         </div>
 
 
-        {true && (
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-amber-50 border border-amber-200">
-            <div>
-              <p className="text-sm font-bold text-amber-900">
-                Previous Dues
-              </p>
+        <div className="flex items-center gap-2 shrink-0">
 
-              <p className="text-xs text-amber-700">
-                {previousDues.length} previous fee record
-                {previousDues.length > 1 ? "s" : ""} have
-                outstanding amounts.
-              </p>
-            </div>
-
+          {true && (
             <Button
               onClick={() => setPreviousDuesOpen(true)}
               variant="outline"
-              className="rounded-xl border-amber-300 text-amber-800 hover:bg-amber-100"
-            >
-              View Previous Dues
+              className="h-10 px-3.5 rounded-xl border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 font-bold text-xs gap-2"
+            >Previous Year Dues
+
+              <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-amber-200 text-amber-900 text-[10px] font-extrabold">
+                {previousDues.length}
+              </span>
             </Button>
-          </div>
-        )}
+          )}
+
+          <Button
+            onClick={() => setIsExportModalOpen(true)}
+            className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-2 shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+          >
+            <FileSpreadsheet className="h-4 w-4 stroke-[2.2]" />
+            <span>Export Report</span>
+          </Button>
+
+        </div>
 
 
         {previousDuesOpen && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="w-full max-w-5xl max-h-[85vh] overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 backdrop-blur-md p-4 sm:p-6">
+
+            <div className="w-full max-w-5xl max-h-[85vh] overflow-hidden rounded-[28px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-[0_25px_80px_rgba(15,23,42,0.25)] flex flex-col">
+
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <div className="relative flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-slate-50/80 via-white to-amber-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/10 shrink-0">
 
-                <div>
-                  <h2 className="text-xl font-extrabold text-slate-900">
-                    Previous Year Dues
-                  </h2>
+                {/* Ambient Glow */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/[0.05] rounded-full blur-3xl pointer-events-none" />
 
-                  <p className="text-sm text-slate-500 mt-1">
-                    Outstanding fees from previous academic years
-                  </p>
+                <div className="relative flex items-center gap-3.5">
+
+                  <div className="h-11 w-11 rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/50 flex items-center justify-center shrink-0 shadow-sm">
+                    <Receipt className="h-5 w-5" strokeWidth={2.2} />
+                  </div>
+
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                      Previous Year Dues
+                    </h2>
+
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                      Outstanding fees from previous academic years
+                    </p>
+                  </div>
+
                 </div>
 
                 <Button
                   variant="outline"
                   onClick={() => setPreviousDuesOpen(false)}
-                  className="rounded-xl"
+                  className="relative h-9 sm:h-10 px-3.5 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-xs transition-all"
                 >
                   Close
                 </Button>
 
               </div>
 
+
               {/* Body */}
-              <div className="max-h-[65vh] overflow-y-auto p-6">
+              <div className="max-h-[65vh] overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-slate-950/30">
 
                 {previousDues.length === 0 ? (
 
                   <div className="py-16 text-center">
-                    <p className="text-sm font-semibold text-slate-500">
+
+                    <div className="mx-auto h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-sm">
+                      <Receipt className="h-5 w-5 text-slate-400" />
+                    </div>
+
+                    <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-4">
                       No previous dues found.
                     </p>
+
                   </div>
 
                 ) : (
@@ -1536,46 +1617,82 @@ const StudentFeeSection = ({
 
                       <div
                         key={due.id}
-                        className="rounded-2xl border border-amber-200 bg-amber-50/50 p-5"
+                        className="group rounded-2xl border border-amber-200/70 dark:border-amber-900/50 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200"
                       >
 
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-                          <div>
-                            <p className="font-extrabold text-slate-900">
-                              {due.student?.name}
-                            </p>
+                          {/* Student Information */}
+                          <div className="min-w-0">
 
-                            <p className="text-xs text-slate-500 mt-1">
-                              Course: {due.course?.course_name || "-"}
-                            </p>
+                            <div className="flex items-center gap-3">
 
-                            <p className="text-xs text-slate-500">
-                              Batch: {due.batch?.batch_name || "-"}
-                            </p>
+                              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/70 dark:border-amber-900/50 flex items-center justify-center text-amber-700 dark:text-amber-400 font-extrabold shrink-0">
+                                {due.student?.name?.charAt(0)?.toUpperCase() || "S"}
+                              </div>
 
-                            <p className="text-xs text-slate-500">
-                              Academic Year: {due.academic_year}
-                            </p>
+                              <div className="min-w-0">
+                                <p className="font-extrabold text-slate-900 dark:text-white truncate">
+                                  {due.student?.name}
+                                </p>
+
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
+                                  Previous Academic Year
+                                </p>
+                              </div>
+
+                            </div>
+
+                            <div className="mt-3 space-y-1">
+
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Course:{" "}
+                                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                  {due.course?.course_name || "-"}
+                                </span>
+                              </p>
+
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Batch:{" "}
+                                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                  {due.batch?.batch_name || "-"}
+                                </span>
+                              </p>
+
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Academic Year:{" "}
+                                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                  {due.academic_year}
+                                </span>
+                              </p>
+
+                            </div>
+
                           </div>
 
-                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+
+                          {/* Remaining Due */}
+                          <div className="md:min-w-[130px]">
+
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                               Remaining Due
                             </p>
 
-                            <p className="text-xl font-extrabold text-red-600">
+                            <p className="text-xl font-extrabold text-red-600 dark:text-red-400 mt-1">
                               ₹{Number(due.remaining_amount).toLocaleString("en-IN")}
                             </p>
+
                           </div>
 
+
+                          {/* Payment Button */}
                           <Button
                             onClick={() => {
                               setSelectedFee(due);
                               setPaymentDrawerOpen(true);
                               setPreviousDuesOpen(false);
                             }}
-                            className="rounded-xl bg-blue-600 hover:bg-blue-700"
+                            className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 active:scale-[0.98] transition-all shrink-0"
                           >
                             Collect Payment
                           </Button>
@@ -1589,30 +1706,27 @@ const StudentFeeSection = ({
                   </div>
 
                 )}
+
               </div>
+
             </div>
+
           </div>
         )}
 
 
 
-        <Button
-          onClick={() => setIsExportModalOpen(true)}
-          className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-2 shadow-md shadow-blue-500/20 active:scale-95 transition-all"
-        >
-          <FileSpreadsheet className="h-4 w-4 stroke-[2.2]" />
-          <span>Export Report</span>
-        </Button>
       </div>
+
+
 
       {/* Analytics Dashboard Component */}
       <FeeAnalyticsDashboard
         studentFees={studentFees}
+        analyticsStudentFees={analyticsStudentFees}
         feeTransactions={feeTransactions}
         onPrintReceipt={handleRecentTransactionPrint}
       />
-
-
 
       {/* Student Fee Filters */}
       <StudentFeeFilters

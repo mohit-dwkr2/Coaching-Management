@@ -11,17 +11,37 @@ import React from "react";
 export default function ContactSection() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Basic form fields
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
 
-  // Dropdown states
-  const [category, setCategory] = React.useState("");
-  const [selectedClass, setSelectedClass] = React.useState("");
-  const [displaySubject, setDisplaySubject] = useState("");
-  
-  // Naya state: Class/Exam ki details store karne ke liye
+  // Course dropdown
+  const [courses, setCourses] = useState<
+    { id: string; course_name: string }[]
+  >([]);
+  const [selectedCourse, setSelectedCourse] = useState("");
+  // Selected course details
   const [courseInfo, setCourseInfo] = useState("");
+
+
+  React.useEffect(() => {
+    const fetchCourses = async () => {
+      const { data, error } = await supabase
+        .from("Coaching-3_Courses")
+        .select("id, course_name")
+        .eq("status", "active")
+        .order("course_name", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching courses:", error);
+        return;
+      }
+
+      setCourses(data || []);
+    };
+    fetchCourses();
+  }, []);
+
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -57,9 +77,7 @@ export default function ContactSection() {
 
       // Reset form and all states
       setForm({ name: "", email: "", phone: "", message: "" });
-      setCategory("");
-      setSelectedClass("");
-      setDisplaySubject("");
+      setSelectedCourse("");
       setCourseInfo("");
 
     } catch (error: any) {
@@ -130,76 +148,32 @@ export default function ContactSection() {
 
               <div className="space-y-4">
                 <select
-                  value={category}
+                  value={selectedCourse}
                   onChange={(e) => {
-                    setCategory(e.target.value);
-                    setSelectedClass("");
-                    setDisplaySubject("");
-                    setCourseInfo(""); // Clear course details on change
+                    const courseId = e.target.value;
+
+                    setSelectedCourse(courseId);
+
+                    const selected = courses.find(
+                      (course) => course.id === courseId
+                    );
+
+                    setCourseInfo(selected?.course_name || "");
                   }}
                   className="w-full p-3 h-12 rounded-md border border-slate-200 bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                  disabled={isSubmitting}
                 >
-                  <option value="">Select Class/Courses</option>
-                  <option value="school">School Classes (5th - 12th)</option>
-                  <option value="competitive">Competitive Exams</option>
+                  <option value="">Select Course</option>
+
+                  {courses.map((course) => (
+                    <option
+                      key={course.id}
+                      value={course.id}
+                    >
+                      {course.course_name}
+                    </option>
+                  ))}
                 </select>
-
-                {category === "school" && (
-                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-4">
-                    <select
-                      value={selectedClass}
-                      onChange={(e) => {
-                        setSelectedClass(e.target.value);
-                        setDisplaySubject("");
-                      }}
-                      className="p-3 h-12 rounded-md border border-slate-200 bg-slate-50 text-sm outline-none"
-                    >
-                      <option value="">Select Class</option>
-                      {[5, 6, 7, 8, 9, 10, 11, 12].map(num => (
-                        <option key={num} value={num}>{num}th Standard</option>
-                      ))}
-                    </select>
-
-                    <select
-                      disabled={!selectedClass}
-                      value={displaySubject}
-                      onChange={(e) => {
-                        const sub = e.target.value;
-                        setDisplaySubject(sub);
-                        // FIXED: Email ke bajaye courseInfo update kar rahe hain
-                        setCourseInfo(`School: ${selectedClass}th, Subject: ${sub}`);
-                      }}
-                      className="p-3 h-12 rounded-md border border-slate-200 bg-slate-50 text-sm outline-none disabled:opacity-50"
-                    >
-                      <option value="">Select Subject</option>
-                      <option value="Mathematics">Mathematics</option>
-                      <option value="Science">Science</option>
-                      <option value="Physics">Physics</option>
-                      <option value="Chemistry">Chemistry</option>
-                      <option value="All Subjects">All Subjects</option>
-                    </select>
-                  </motion.div>
-                )}
-
-                {category === "competitive" && (
-                  <motion.select
-                    initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                    value={displaySubject}
-                    onChange={(e) => {
-                      const exam = e.target.value;
-                      setDisplaySubject(exam);
-                      // FIXED: Email ke bajaye courseInfo update kar rahe hain
-                      setCourseInfo(`Competitive: ${exam}`);
-                    }}
-                    className="w-full p-3 h-12 rounded-md border border-slate-200 bg-slate-50 text-sm outline-none"
-                  >
-                    <option value="">Select Target Exam</option>
-                    <option value="Navodaya entrance exam">Navodaya Entrance Exam</option>
-                    <option value="Sainik school entrance">Sainik School Entrance Exam</option>
-                    <option value="Shramodaya school entrance exam">Shramodaya School Entrance Exam</option>
-                    <option value="Rastriya military school entrance xam">Rastriya Military School Entrance Exam</option>
-                  </motion.select>
-                )}
               </div>
 
               <Textarea

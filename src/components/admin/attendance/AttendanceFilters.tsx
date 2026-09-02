@@ -49,7 +49,7 @@ return (
     <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap sm:flex-nowrap justify-start xl:justify-end">
       
       {/* Export Report Button */}
-      <Button
+      {/* <Button
         type="button"
         variant="outline"
         onClick={onExport}
@@ -57,10 +57,10 @@ return (
       >
         <Download size={17} className="text-slate-500" strokeWidth={2.2} />
         <span>Export Report</span>
-      </Button>
+      </Button> */}
 
       {/* Take Attendance Button */}
-      <Button
+      {/* <Button
         type="button"
         onClick={onTakeAttendance}
         disabled={!selectedCourse || !selectedBatch || !selectedDate}
@@ -68,7 +68,7 @@ return (
       >
         <UserCheck size={18} strokeWidth={2.2} />
         <span>Take Attendance</span>
-      </Button>
+      </Button> */}
     </div>
 
     {/* Filter Inputs Row (Student Manager Inspired Filter Style) */}

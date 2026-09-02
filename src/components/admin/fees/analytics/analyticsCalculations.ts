@@ -1,7 +1,7 @@
 import {
   StudentFeeData,
   FeeTransaction,
-} from "../StudentFees/types";
+} from "../types";
 
 export interface FeeAnalyticsData {
   totalAssigned: number;

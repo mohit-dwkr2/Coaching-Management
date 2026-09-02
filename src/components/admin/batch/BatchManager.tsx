@@ -43,13 +43,16 @@ export default function BatchManager() {
       const { count: assignedStudents } = await supabase
         .from("Coaching-3_Students")
         .select("*", { count: "exact", head: true })
-        .not("batch_id", "is", null);
+        .not("batch_id", "is", null)
+        .eq("status", "active");
+
 
       // Unassigned Students
       const { count: unassignedStudents } = await supabase
         .from("Coaching-3_Students")
         .select("*", { count: "exact", head: true })
-        .is("batch_id", null);
+        .is("batch_id", null)
+        .eq("status", "active");
 
       setStats({
         totalBatches: totalBatches || 0,
@@ -75,7 +78,7 @@ export default function BatchManager() {
   };
 
 
-return (
+  return (
     <div className="space-y-8 max-w-7xl mx-auto pb- pt-14">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
@@ -95,7 +98,7 @@ return (
 
       {/* ================= STATS CARDS (Matching Student Manager Style) ================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        
+
         {/* Total Batches Card */}
         <div className="relative overflow-hidden bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(37,99,235,0.1)] hover:-translate-y-1 transition-all duration-300 group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all"></div>

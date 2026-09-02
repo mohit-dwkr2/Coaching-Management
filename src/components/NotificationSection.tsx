@@ -34,20 +34,30 @@ const NotificationSection = ({ profile }: { profile?: any }) => {
 
     queryFn: async () => {
 
+      const filters = [
+        "target_type.eq.global",
+        `and(target_type.eq.course,course_id.eq.${profile.course_id})`,
+      ];
+
+      // Batch assigned hai tabhi batch notification filter add karo
+      if (profile.batch_id) {
+        filters.push(
+          `and(target_type.eq.batch,batch_id.eq.${profile.batch_id})`
+        );
+      }
+
       const { data, error } = await supabase
         .from("Coaching-3_Notifications")
         .select(`
-        *,
-        course:course_id(
-          course_name
-        ),
-        batch:batch_id(
-          batch_name
-        )
-      `)
-        .or(
-          `target_type.eq.global,course_id.eq.${profile?.course_id},batch_id.eq.${profile?.batch_id}`
-        )
+      *,
+      course:course_id(
+        course_name
+      ),
+      batch:batch_id(
+        batch_name
+      )
+    `)
+        .or(filters.join(","))
         .order("created_at", { ascending: false });
 
       if (error) throw error;

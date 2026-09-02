@@ -88,7 +88,7 @@ export default function UserLogin() {
     const { data, error } = await supabase
       .from("Coaching-3_Courses")
       .select("*")
-      
+
       .eq("status", "active")
       .order("course_name");
     if (!error && data) {
@@ -194,10 +194,31 @@ export default function UserLogin() {
       const user = session.user;
 
       const userId = user.id;
+      
 
       // ============================
       // CHECK EXISTING STUDENT
       // ============================
+
+      const { data: linkResult, error: linkError } =
+        await supabase.rpc(
+          "Coaching-3_LinkExistingStudent",
+          {
+            p_email: email,
+          }
+        );
+
+      if (linkError) throw linkError;
+
+      console.log("EXISTING STUDENT CHECK:", linkResult);
+
+      if (linkResult?.found) {
+        // Manual admission student
+        // Student has been linked + approval marked approved
+        window.location.replace("/dashboard");
+        return;
+      }
+
 
       const {
         data: existingStudent,
@@ -207,6 +228,10 @@ export default function UserLogin() {
         .select("*")
         .eq("email", email)
         .maybeSingle();
+
+      console.log("LOGIN EMAIL:", email);
+      console.log("EXISTING STUDENT:", existingStudent);
+      console.log("STUDENT QUERY ERROR:", studentError);
 
       if (studentError) throw studentError;
 

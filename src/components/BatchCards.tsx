@@ -1,246 +1,370 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, IndianRupee, ChevronDown, ChevronUp, Sparkles, GraduationCap, Calendar, Users } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  GraduationCap,
+  ArrowRight,
+  BookOpen,
+  Award,
+  Target,
+  Brain,
+  Layers,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { supabase } from "@/supabaseClient";
-import { useQuery } from "@tanstack/react-query";
+import { Icon } from "@iconify/react";
 
-// ✅ Type added
-type BatchType = {
-  id: string;
-  class_name: string;
-  subjects: string;
-  start_time: string;
-  end_time: string;
-  price: number;
+type CourseType = {
+  id: number;
+  name: string;
+  description: string;
+  highlights: string[];
+  icon: any;
+  accentColor: string;
 };
+
+const courses: CourseType[] = [
+  {
+    id: 1,
+    name: "JEE & NEET Foundation",
+    description:
+      "Build strong fundamentals with concept-focused learning, regular practice, and expert guidance.",
+    highlights: ["CBSE", "ICSE", "MP Board"],
+    icon: "fluent-emoji-flat:books",
+    accentColor: "from-blue-600 via-indigo-500 to-blue-400",
+  },
+  {
+    id: 2,
+    name: "Class 6–8 Foundation",
+    description:
+      "Strengthen core concepts and develop the problem-solving skills required for competitive preparation.",
+    highlights: ["CBSE", "ICSE", "MP Board"],
+    icon: "fluent-emoji-flat:open-book",
+    accentColor: "from-blue-500 to-cyan-400",
+  },
+  {
+    id: 3,
+    name: "Class 10-12 Board Prep",
+    description:
+      "A structured learning program designed to improve concepts, accuracy, speed, and confidence.",
+    highlights: ["CBSE", "ICSE", "MP Board"],
+  icon: "fluent-emoji-flat:bullseye",
+    accentColor: "from-indigo-600 to-blue-500",
+  },
+  {
+    id: 4,
+    name: "UPSC,MPPSC",
+    description:
+      "Advanced foundation preparation with focused practice and systematic academic guidance.",
+    highlights: ["CBSE", "ICSE", "MP Board"],
+    icon: "fluent-emoji-flat:graduation-cap",
+    accentColor: "from-blue-600 to-indigo-600",
+  },
+  {
+    id: 5,
+    name: "Navodaya Preparation",
+    description:
+      "Focused preparation with structured learning, regular assessments, and targeted practice.",
+    highlights: ["Special Batch", "Mock Tests", "Personal Guidance"],
+    icon: "fluent-emoji-flat:brain",
+    accentColor: "from-sky-500 to-blue-600",
+  },
+  {
+    id: 6,
+    name: "Competitive Exams",
+    description:
+      "Develop strong academic fundamentals and problem-solving abilities for future competitive exams.",
+    highlights: ["JEE/NEET Prep", "Olympiad", "NTSE"],
+    icon: "fluent-emoji-flat:rocket",
+    accentColor: "from-indigo-500 to-purple-600",
+  },
+];
 
 export default function BatchCards() {
   const [showAll, setShowAll] = useState(false);
 
-  // ✅ Fetch + Cache (1 hour)
-  const { data: batches = [], isError } = useQuery<BatchType[]>({
-    queryKey: ["batches"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("Coaching-3_Batches")
-        .select("id, class_name, subjects, start_time, end_time, price")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
-    },
-    staleTime: 1000 * 60 * 60,
-    gcTime: 1000 * 60 * 60 * 2,
-  });
-
-  // ✅ Optional error UI
-  if (isError) {
-    return (
-      <div className="text-center py-10 text-red-500">
-        Failed to load batches
-      </div>
-    );
-  }
-
-  const displayedBatches = showAll ? batches : batches.slice(0, 6);
-
-  const currentYear = new Date().getFullYear();
-  const nextYear = currentYear + 1;
-  const academicSession = `${currentYear}-${nextYear.toString().slice(-2)}`;
+  const displayedCourses = showAll ? courses : courses.slice(0, 6);
 
   return (
-    <section id="batches" className="relative py-56 pb-20 bg-[#f8faff] overflow-hidden">
-      {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none">
-        <div className="absolute top-0 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-10 w-96 h-96 bg-blue-400/5 rounded-full blur-3xl" />
+    <section
+      id="batches"
+      className="relative py-24 md:py-28 bg-[#f8faff] overflow-hidden"
+    >
+      {/* ================= BACKGROUND ================= */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-32 left-10 w-80 h-80 bg-blue-500/[0.05] rounded-full blur-3xl" />
+
+        <div className="absolute top-1/3 -right-32 w-96 h-96 bg-indigo-500/[0.045] rounded-full blur-3xl" />
+
+        <div className="absolute bottom-0 left-1/3 w-96 h-80 bg-blue-400/[0.035] rounded-full blur-3xl" />
+
+        <div
+          className="absolute inset-0 opacity-[0.018]"
+          style={{
+            backgroundImage:
+              "linear-gradient(#64748b 1px, transparent 1px), linear-gradient(90deg, #64748b 1px, transparent 1px)",
+            backgroundSize: "42px 42px",
+          }}
+        />
       </div>
 
+      {/* ================= CONTENT ================= */}
       <div className="container mx-auto px-4 relative z-10">
+
+        {/* ================= SECTION HEADER ================= */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          transition={{ duration: 0.5 }}
+          className="text-center mb-14 md:mb-16"
         >
-          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-blue-500 text-white text-sm font-bold mb-6 border border-blue-500 shadow-sm transition-all hover:bg-blue-600">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
-            </span>
-            <span className="tracking-wide uppercase">
-              Admissions Open {academicSession}
-            </span>
-            <Sparkles className="w-4 h-4 animate-pulse" />
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-blue-600 border border-blue-100 text-[11px] sm:text-xs font-extrabold uppercase tracking-wider mb-5 shadow-[0_8px_25px_rgba(37,99,235,0.07)]">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Admissions Open</span>
           </div>
-          <h2 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight">
-            Our <span className=" text-blue-600">Target Batches</span>
+
+          {/* Heading */}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-950 tracking-tight">
+            Our <span className="text-blue-600">Courses</span>
           </h2>
-          <p className="mt-4 text-gray-600 max-w-2xl mx-auto text-sm md:text-lg leading-relaxed">
-            "High-Performance Courses for Navodaya Entrance Preparation with Expert Guidance and Proven Results"
+
+          {/* Subtitle */}
+          <p className="mt-4 text-sm sm:text-base md:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
+            From foundational concepts to competitive exam preparation — the
+            right course for every board and every class.
           </p>
         </motion.div>
 
+        {/* ================= COURSE GRID ================= */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+          <AnimatePresence mode="popLayout">
 
-{/* --- CARDS SECTION START (EXACT HTML/CSS CUSTOM DESIGN RE-ENGINEERED IN TAILWIND) --- */}
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[28px]">
-  <AnimatePresence mode="popLayout">
-    {displayedBatches.map((b, i) => {
-      // 1. Static Premium Images Array for Premium Look
-      const staticImages = [
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1513258496099-48168024aec0?q=80&w=1200&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1200&auto=format&fit=crop"
-      ];
+            {displayedCourses.map((course, index) => {
+              const IconComponent = course.icon;
 
-      // 2. Dynamic Vertical Gradient Tint Layouts (Aapki CSS logic ke mutabik)
-      const cardTints = [
-        "bg-gradient-to-b from-[#ffffff] via-[#ffffff] to-[#f0f4ff]", // card-rms
-        "bg-gradient-to-b from-[#ffffff] via-[#ffffff] to-[#fff7ed]", // card-shramodaya
-        "bg-gradient-to-b from-[#ffffff] via-[#ffffff] to-[#f0fdf4]"  // card-sainik
-      ];
-      const currentTint = cardTints[i % cardTints.length];
+              return (
+                <motion.div
+                  key={course.id}
+                  layout
+                  initial={{ opacity: 0, y: 25 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{
+                    duration: 0.4,
+                    delay: index * 0.04,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  whileHover={{ y: -6 }}
+                  className="group h-full"
+                >
 
-      // 3. Dynamic Accent Badges Design (Top Left Corner on Image)
-      const badges = [
-        { text: "Popular", bg: "bg-[#ea580c]" },
-        { text: "Best Seller", bg: "bg-[#ea580c]" },
-        { text: "New Batch", bg: "bg-[#16a34a]" }
-      ];
-      const currentBadge = badges[i % badges.length];
+                  {/* ================= PREMIUM CARD ================= */}
+                  <div
+                    className="
+                      relative h-full flex flex-col justify-between
+                      rounded-[22px]
+                      bg-white
+                      border border-slate-200/70
+                      shadow-[0_7px_26px_rgba(15,23,42,0.04)]
+                      hover:shadow-[0_18px_40px_rgba(37,99,235,0.10)]
+                      hover:border-blue-200/80
+                      transition-all duration-300
+                      overflow-hidden
+                      p-5 sm:p-6
+                    "
+                  >
 
-      return (
-        <motion.div
-          key={b.id}
-          layout
-          initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-          whileHover={{ 
-            y: -8, 
-            boxShadow: "0 25px 50px rgba(51, 102, 255, 0.1)",
-            borderColor: "rgba(51, 102, 255, 0.25)"
-          }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className={`group flex flex-col rounded-[24px] overflow-hidden border border-[#e2e8f0] shadow-[0_4px_20px_rgba(15,23,42,0.03)] transition-all duration-300 ${currentTint}`}
-        >
-          {/* IMAGE WORK - TOP BANNER POSITION */}
-          <div className="relative w-full h-[200px] overflow-hidden">
-            <img 
-              src={staticImages[i % staticImages.length]} 
-              alt="Coaching Batch" 
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            {/* Displaying condition for badge since 2nd index had it commented in HTML */}
-            {i % 3 !== 1 && (
-              <div className={`absolute top-4 left-4 text-white px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.5px] shadow-[0_4px_10px_rgba(0,0,0,0.15)] z-10 ${currentBadge.bg}`}>
-                {currentBadge.text}
-              </div>
-            )}
-          </div>
+                    {/* ================= HOVER ACCENT LINE ================= */}
+                    <div
+                      className={`
+                        absolute top-0 left-0
+                        h-1
+                        w-0
+                        group-hover:w-full
+                        bg-gradient-to-r ${course.accentColor}
+                        transition-all duration-500 ease-out
+                      `}
+                    />
 
-          {/* PREMIUM INTERNAL CONTENT */}
-          <div className="p-7 flex flex-col flex-grow">
-            <div className="course-header">
-              {/* --- SUBJECT HEADER IS COMMENTED OUT AS REQUESTED --- */}
-              <h3 className="text-[22px] text-[#0f172a] font-bold leading-[1.3]">{b.subjects}</h3>
-              <p className="mt-2.5 text-[#64748b] text-[14px] mechanics-p leading-[1.6]">
-                Complete preparation batch with study material.
-              </p>
-            </div>
+                    {/* Soft Hover Glow */}
+                    <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-blue-500/[0.035] blur-3xl group-hover:bg-blue-500/[0.07] transition-all duration-500 pointer-events-none" />
 
-            {/* 2x2 GRID INSIDE CARD CONTENT */}
-            <div className="grid grid-cols-2 gap-3.5 mt-6">
-              {/* Class Info Box */}
-              <div className="bg-white/80 border border-[#e2e8f0]/90 p-3.5 px-3.5 rounded-[14px] flex items-center gap-3 transition-all duration-300 group-hover:bg-white group-hover:border-[#3366ff]/15 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
-                <div className="text-[#3366ff] text-base bg-[#3366ff]/[0.06] w-9 h-9 flex items-center justify-center rounded-[10px] shrink-0">
-                  <GraduationCap className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[#94a3b8] text-[11px] font-semibold uppercase block">Class</span>
-                  <h4 className="text-[#334155] text-[10px]  md:text-[14px] font-bold mt-0.5 truncate">{b.class_name}</h4>
-                </div>
-              </div>
+                    <div className="relative">
 
-              {/* Timing Info Box */}
-              <div className="bg-white/80 border border-[#e2e8f0]/90 p-3.5 px-3.5 rounded-[14px] flex items-center gap-3 transition-all duration-300 group-hover:bg-white group-hover:border-[#3366ff]/15 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
-                <div className="text-[#3366ff] text-base bg-[#3366ff]/[0.06] w-9 h-9 flex items-center justify-center rounded-[10px] shrink-0">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[#94a3b8] text-[11px] font-semibold uppercase block">Timing</span>
-                  <h4 className="text-[#334155] text-[10px] md:text-[14px] font-bold mt-0.5 truncate">{b.start_time}  {b.end_time}</h4>
-                </div>
-              </div>
+                      {/* ================= CARD TOP ================= */}
+                      <div className="flex items-start justify-between mb-5">
 
-              {/* Duration Box */}
-              <div className="bg-white/80 border border-[#e2e8f0]/90 p-3.5 px-3.5 rounded-[14px] flex items-center gap-3 transition-all duration-300 group-hover:bg-white group-hover:border-[#3366ff]/15 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
-                <div className="text-[#3366ff] text-base bg-[#3366ff]/[0.06] w-9 h-9 flex items-center justify-center rounded-[10px] shrink-0">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[#94a3b8] text-[11px] font-semibold uppercase block">Duration</span>
-                  <h4 className="text-[#334155] text-[10px]  md:text-[14px] font-bold mt-0.5 truncate">12 Months</h4>
-                </div>
-              </div>
+                        {/* Colourful Icon */}
+                        <div
+                          className={`
+                            relative w-12 h-12 rounded-[15px]
+                            bg-gradient-to-br ${course.accentColor}
+                            flex items-center justify-center
+                            text-white
+                            shadow-[0_8px_20px_rgba(37,99,235,0.16)]
+                            transition-all duration-300
+                            group-hover:scale-105
+                            group-hover:shadow-[0_10px_24px_rgba(37,99,235,0.20)]
+                          `}
+                        >
+                          <div className="absolute inset-[1px] rounded-[14px] bg-white/10" />
 
-              {/* Seats Box */}
-              <div className="bg-white/80 border border-[#e2e8f0]/90 p-3.5 px-3.5 rounded-[14px] flex items-center gap-3 transition-all duration-300 group-hover:bg-white group-hover:border-[#3366ff]/15 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
-                <div className="text-[#3366ff] text-base bg-[#3366ff]/[0.06] w-9 h-9 flex items-center justify-center rounded-[10px] shrink-0">
-                  <Users className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[#94a3b8] text-[11px] font-semibold uppercase block">Seats</span>
-                  <h4 className="text-[#334155] text-[10px]  md:text-[14px] font-bold mt-0.5 truncate">50 Students</h4>
-                </div>
-              </div>
-            </div>
+                          <Icon icon={course.icon} className="w-8 h-8" />
+                        </div>
 
-            {/* CARD BOTTOM SPLIT */}
-            <div className="mt-7 pt- border-t border-dashed border-[#e2e8f0] flex justify-between items-center">
-              <div className="text-[26px] text-[#0f172a] font-bold">
-                <span className="text-[20px] text-[#3366ff] font-bold">₹</span>
-                {b.price}
-                <span className="text-[13px] text-[#64748b] font-medium">/mo</span>
-              </div>
-              <Button 
-                className="bg-[#3366ff] hover:bg-[#1d4ed8] text-white px-6 py-3 h-auto rounded-[12px] text-[14px] font-bold transition-all duration-200 shadow-[0_4px_14px_rgba(51,102,255,0.2)] hover:shadow-[0_6px_18px_rgba(51,102,255,0.35)] hover:-translate-y-0.5 active:translate-y-0"
-                asChild
-              >
-                <a href="#contact">Enroll Now</a>
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-      );
-    })}
-  </AnimatePresence>
-</div>
-{/* --- CARDS SECTION END --- */}
+                        {/* Course Number */}
+                        <div
+                          className="
+                            flex items-center justify-center
+                            w-8 h-8 rounded-lg
+                            bg-slate-50
+                            border border-slate-100
+                            text-[9px] font-black
+                            text-slate-400
+                            group-hover:bg-slate-100
+                            transition-all duration-300
+                          "
+                        >
+                          {String(course.id).padStart(2, "0")}
+                        </div>
 
-        {batches.length > 6 && (
-          <div className="mt-16 text-center">
-            <Button 
-              variant="outline" 
-              size="lg" 
+                      </div>
+
+                      {/* ================= COURSE TITLE ================= */}
+                      <h3
+                        className="
+                          text-lg sm:text-[20px]
+                          font-black
+                          text-slate-950
+                          tracking-tight
+                          leading-snug
+                          group-hover:text-blue-600
+                          transition-colors duration-300
+                        "
+                      >
+                        {course.name}
+                      </h3>
+
+                      {/* ================= DESCRIPTION ================= */}
+                      <p className="mt-2.5 text-[13px] text-slate-500 leading-[1.65]">
+                        {course.description}
+                      </p>
+
+                      {/* ================= HIGHLIGHTS ================= */}
+                      <div className="mt-5">
+
+                        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400 mb-2">
+                          Program Highlights
+                        </p>
+
+                        <div className="flex flex-wrap gap-1.5">
+                          {course.highlights.map((tag) => (
+                            <span
+                              key={tag}
+                              className="
+                                inline-flex items-center
+                                px-2.5 py-1
+                                rounded-lg
+                                text-[10px]
+                                font-extrabold
+                                bg-slate-50
+                                text-slate-600
+                                border border-slate-200/70
+                                group-hover:bg-blue-50
+                                group-hover:text-blue-600
+                                group-hover:border-blue-100
+                                transition-all duration-200
+                              "
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+
+                      </div>
+                    </div>
+
+                    {/* ================= CTA ================= */}
+                    <div className="relative mt-6 pt-4 border-t border-slate-100">
+
+                      <a
+                        href="#contact"
+                        className="
+                          flex items-center justify-between
+                          w-full
+                          group/link
+                        "
+                      >
+
+                        <span className="text-[13px] font-extrabold text-blue-700 group-hover/link:text-blue-600 transition-colors duration-200">
+                          Enquire Now
+                        </span>
+
+                        <span
+                          className="
+                            flex items-center justify-center
+                            w-8 h-8 rounded-lg
+                            bg-blue-50
+                            text-blue-600
+                            border border-blue-100
+                            group-hover/link:bg-blue-600
+                            group-hover/link:text-white
+                            group-hover/link:border-blue-600
+                            transition-all duration-300
+                          "
+                        >
+                          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5" />
+                        </span>
+
+                      </a>
+
+                    </div>
+
+                  </div>
+                </motion.div>
+              );
+            })}
+
+          </AnimatePresence>
+        </div>
+
+        {/* ================= SHOW MORE BUTTON ================= */}
+        {courses.length > 6 && (
+          <div className="mt-12 text-center">
+            <Button
+              variant="outline"
               onClick={() => setShowAll(!showAll)}
-              className="h-14 rounded-full px-10 border-2 border-gray-200 text-gray-700 font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm"
+              className="
+                h-11 rounded-xl px-6
+                border-slate-200
+                bg-white
+                text-slate-700
+                font-bold text-sm
+                hover:border-blue-300
+                hover:text-blue-600
+                hover:bg-blue-50/50
+                transition-all duration-200
+                shadow-sm
+              "
             >
               {showAll ? (
-                <>Show Less<ChevronUp className="ml-2 h-5 w-5" /></>
+                <>
+                  Show Less
+                  <ChevronUp className="ml-2 w-4 h-4" />
+                </>
               ) : (
-                <>Show More<ChevronDown className="ml-2 h-5 w-5" /></>
+                <>
+                  Show More
+                  <ChevronDown className="ml-2 w-4 h-4" />
+                </>
               )}
             </Button>
           </div>
         )}
 
-        {batches.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-            <p className="text-gray-400 font-medium">No active batches at the moment.</p>
-          </div>
-        )}
       </div>
     </section>
   );

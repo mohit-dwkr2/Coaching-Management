@@ -153,6 +153,7 @@ export default function AttendanceDrawer({
                 roll_number
             `)
                 .eq("batch_id", selectedBatch)
+                .eq("status", "active")
                 .order("roll_number", {
                     ascending: true,
                 });

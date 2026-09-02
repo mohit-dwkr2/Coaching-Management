@@ -18,106 +18,107 @@ export default function CourseSection({
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [courses, setCourses] = useState<any[]>([]);
-const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
-const fetchCourses = async () => {
+  const fetchCourses = async () => {
 
-  // 1. Courses
-  const { data: courses, error: courseError } = await supabase
-    .from("Coaching-3_Courses")
-    .select("*")
-    .order("course_name");
+    // 1. Courses
+    const { data: courses, error: courseError } = await supabase
+      .from("Coaching-3_Courses")
+      .select("*")
+      .order("course_name");
 
-  if (courseError) return;
+    if (courseError) return;
 
-  // 2. Batches
-  const { data: batches } = await supabase
-    .from("Coaching-3_StudentBatches")
-    .select("course_id");
+    // 2. Batches
+    const { data: batches } = await supabase
+      .from("Coaching-3_StudentBatches")
+      .select("course_id");
 
-  // 3. Students
-  const { data: students } = await supabase
-    .from("Coaching-3_Students")
-    .select("course_id");
+    // 3. Students
+    const { data: students } = await supabase
+      .from("Coaching-3_Students")
+      .select("course_id")
+      .eq("status", "active");
 
-  const finalCourses = courses.map((course) => {
+    const finalCourses = courses.map((course) => {
 
-    const batchCount =
-      batches?.filter(
-        b => b.course_id === course.id
-      ).length || 0;
+      const batchCount =
+        batches?.filter(
+          b => b.course_id === course.id
+        ).length || 0;
 
-    const studentCount =
-      students?.filter(
-        s => s.course_id === course.id
-      ).length || 0;
+      const studentCount =
+        students?.filter(
+          s => s.course_id === course.id
+        ).length || 0;
 
-    return {
-      ...course,
-      batchCount,
-      studentCount,
-    };
+      return {
+        ...course,
+        batchCount,
+        studentCount,
+      };
 
-  });
+    });
 
-  setCourses(finalCourses);
-   onUpdated();
+    setCourses(finalCourses);
+    onUpdated();
 
-};
+  };
 
-useEffect(() => {
-  fetchCourses();
-}, []);
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
 
-const deleteCourse = async (course: any) => {
+  const deleteCourse = async (course: any) => {
 
-  if (course.batchCount > 0) {
-    toast.error(
-      "Cannot delete course. Remove all batches first."
-    );
-    return;
-  }
+    if (course.batchCount > 0) {
+      toast.error(
+        "Cannot delete course. Remove all batches first."
+      );
+      return;
+    }
 
-  if (course.studentCount > 0) {
-    toast.error(
-      "Cannot delete course. Students are still enrolled."
-    );
-    return;
-  }
+    if (course.studentCount > 0) {
+      toast.error(
+        "Cannot delete course. Students are still enrolled."
+      );
+      return;
+    }
 
-  if (
-    !window.confirm(
-      `Delete "${course.course_name}" ?`
-    )
-  ) {
-    return;
-  }
+    if (
+      !window.confirm(
+        `Delete "${course.course_name}" ?`
+      )
+    ) {
+      return;
+    }
 
-  const { error } = await supabase
-    .from("Coaching-3_Courses")
-    .delete()
-    .eq("id", course.id);
+    const { error } = await supabase
+      .from("Coaching-3_Courses")
+      .delete()
+      .eq("id", course.id);
 
-  if (error) {
-    toast.error(error.message);
-    return;
-  }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
 
-  toast.success("Course deleted.");
+    toast.success("Course deleted.");
 
- await fetchCourses();
+    await fetchCourses();
 
-};
+  };
 
 
   return (
     /* Outer container without overflow-hidden so Drawer overlays freely across the full screen */
     <div className="relative w-full bg-white rounded-3xl border border-slate-200/90 shadow-xs">
-      
+
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-7 border-b border-slate-100 bg-gradient-to-r from-slate-50/60 via-white to-slate-50/30 rounded-t-3xl">
-        
+
         <div className="flex items-center gap-3.5">
           <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
             <BookOpen size={22} strokeWidth={2.2} />
