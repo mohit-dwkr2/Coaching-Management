@@ -58,82 +58,241 @@ export default function InquiryInbox() {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 px-4 md:px-0">
       {/* Header Area */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-5 gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-200 pb-5 gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Student Inquiries</h2>
-          <p className="text-slate-500 text-xs md:text-sm mt-1">Manage and respond to potential student leads</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Student Inquiries
+          </h2>
+
+          <p className="text-slate-500 text-xs md:text-sm mt-1">
+            Manage and respond to potential student leads
+          </p>
         </div>
-        <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-2xl font-bold text-xs md:text-sm self-start sm:self-auto">
+
+        <div className="bg-primary/10 text-primary px-4 py-2 rounded-xl font-bold text-xs md:text-sm self-start sm:self-auto border border-primary/10">
           Total: {inquiries.length}
         </div>
       </div>
 
       {inquiries.length === 0 ? (
         <div className="text-center py-16 md:py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 px-6">
-          <div className="bg-white h-14 w-14 md:h-16 md:w-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+          <div className="bg-white h-14 w-14 md:h-16 md:w-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100">
             <Mail className="h-6 w-6 md:h-8 md:w-8 text-slate-300" />
           </div>
-          <h3 className="text-slate-800 font-bold text-lg">Your inbox is empty</h3>
-          <p className="text-slate-500 max-w-xs mx-auto text-sm mt-1">
+
+          <h3 className="text-slate-800 font-bold text-lg">
+            Your inbox is empty
+          </h3>
+
+          <p className="text-slate-500 max-w-xs mx-auto text-sm mt-1 leading-relaxed">
             When students fill out the Admission form, their messages will appear here.
           </p>
         </div>
       ) : (
         <div className="grid gap-4">
           {inquiries.map((q) => (
-            <Card key={q.id} className="group border-none shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden bg-white">
+            <Card
+              key={q.id}
+              className="
+              group
+              overflow-hidden
+              rounded-2xl
+              border border-slate-200/70
+              bg-white
+              shadow-sm
+              transition-all duration-300
+              hover:-translate-y-[1px]
+              hover:shadow-lg hover:shadow-slate-200/50
+            "
+            >
               <CardContent className="p-0">
                 <div className="flex flex-row min-h-full">
-                  {/* Sidebar strip - Hamesha left mein rahega */}
-                  <div className="w-1 md:w-1.5 bg-primary/20 group-hover:bg-primary transition-colors shrink-0" />
-                  
-                  <div className="p-4 md:p-6 flex-1">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      {/* Left: Student Info */}
-                      <div className="space-y-3">
+
+                  {/* Left Accent Strip */}
+                  <div
+                    className="
+                    w-1
+                    bg-primary/20
+                    group-hover:bg-primary
+                    group-hover:w-1.5
+                    transition-all duration-200
+                    shrink-0
+                  "
+                  />
+
+                  <div className="p-3 sm:p-5 md:p-6 flex-1 min-w-0">
+
+                    {/* Top Section */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+
+                      {/* Student Info */}
+                      <div className="space-y-3 min-w-0">
+
+                        {/* Name + Date */}
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
-                            <User className="h-5 w-5" />
+                          <div
+                            className="
+                            h-11 w-11
+                            shrink-0
+                            rounded-xl
+                            bg-blue-50
+                            border border-blue-100
+                            flex items-center justify-center
+                            text-blue-600
+                          "
+                          >
+                            <User className="h-4 w-4 sm:h-5 sm:w-5" />
                           </div>
+
                           <div className="min-w-0">
-                            <h4 className="font-bold text-slate-900 text-base md:text-lg leading-tight truncate">{q.name}</h4>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mt-1">
-                              <Calendar className="h-3 w-3" /> {new Date(q.created_at).toLocaleDateString()}
+                            <h4
+                              className="
+                              font-bold
+                              text-slate-900
+                              text-base md:text-lg
+                              leading-tight
+                              truncate
+                            "
+                            >
+                              {q.name}
+                            </h4>
+
+                            <span
+                              className="
+                              text-[10px]
+                              font-semibold
+                              text-slate-400
+                              uppercase
+                              tracking-widest
+                              flex items-center gap-1.5
+                              mt-1.5
+                            "
+                            >
+                              <Calendar className="h-3 w-3" />
+                              {new Date(q.created_at).toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-2 md:gap-4 text-[11px] md:text-sm font-medium">
-                          <a 
-                            href={`mailto:${q.email}`} 
-                            className="flex items-center gap-2 text-slate-600 hover:text-primary transition-colors bg-slate-50 px-2.5 py-1.5 rounded-lg truncate max-w-full"
+                        {/* Email + Phone */}
+                        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1.5 sm:gap-2 text-xs md:text-sm font-medium">
+
+                          {/* Email */}
+                          <a
+                            href={`mailto:${q.email}`}
+                            className="
+                            inline-flex
+                            items-center
+                            gap-2
+                            min-w-0
+                            max-w-full
+                            text-slate-600
+                            hover:text-primary
+                            transition-colors
+                            bg-slate-50
+                            border border-slate-100
+                            px-3
+                            py-2
+                            rounded-xl
+                          "
                           >
-                            <Mail className="h-3.5 w-3.5 text-primary shrink-0" /> <span className="truncate">{q.email || "No Email"}</span>
+                            <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
+
+                            <span className="truncate">
+                              {q.email || "No Email"}
+                            </span>
                           </a>
-                          <a 
-                            href={`tel:${q.phone}`} 
-                            className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors bg-slate-50 px-2.5 py-1.5 rounded-lg"
+
+                          {/* Phone */}
+                          <a
+                            href={`tel:${q.phone}`}
+                            className="
+                            inline-flex
+                            items-center
+                            gap-2
+                            w-fit
+                            max-w-full
+                            text-slate-600
+                            hover:text-blue-600
+                            transition-colors
+                            bg-slate-50
+                            border border-slate-100
+                            px-3
+                            py-2
+                            rounded-xl
+                          "
                           >
-                            <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" /> {q.phone}
+                            <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+
+                            <span className="truncate">
+                              {q.phone}
+                            </span>
                           </a>
                         </div>
                       </div>
 
                       {/* Right: Actions */}
-                      <div className="flex items-center gap-2 justify-start sm:justify-end lg:justify-center pt-2 lg:pt-0 border-t lg:border-none border-slate-50">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="rounded-xl border-slate-200 h-9 text-xs hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 flex-1 sm:flex-none"
-                          onClick={() => window.open(`https://wa.me/${q.phone.replace(/\D/g,'')}`, '_blank')}
+                      <div
+                        className="
+    flex
+    items-center
+    gap-2
+    w-full lg:w-auto
+    justify-end
+    pt-2 sm:pt-3 lg:pt-0
+    border-t lg:border-none
+    border-slate-100
+  "
+                      >
+                        {/* WhatsApp */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="
+                          h-10
+                          rounded-xl
+                          border-slate-200
+                          bg-white
+                          px-4
+                          text-xs
+                          font-semibold
+                          text-slate-700
+                          hover:bg-blue-50
+                          hover:text-blue-700
+                          hover:border-blue-200
+                          transition-all
+                          flex-1 sm:flex-none
+                        "
+                          onClick={() =>
+                            window.open(
+                              `https://wa.me/${q.phone.replace(/\D/g, "")}`,
+                              "_blank"
+                            )
+                          }
                         >
-                          <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> WhatsApp
+                          <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                          WhatsApp
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+
+                        {/* Delete */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleDelete(q.id)}
-                          className="rounded-xl h-9 w-9 text-slate-400 hover:text-red-500 hover:bg-red-50 shrink-0"
+                          className="
+                          rounded-xl
+                          h-10
+                          w-10
+                          text-slate-400
+                          hover:text-red-500
+                          hover:bg-red-50
+                          shrink-0
+                          transition-all
+                        "
                         >
                           <Trash2 className="h-4.5 w-4.5" />
                         </Button>
@@ -142,9 +301,52 @@ export default function InquiryInbox() {
 
                     {/* Message Box */}
                     {q.message && (
-                      <div className="mt-4 p-3 md:p-4 bg-slate-50/80 rounded-2xl border border-slate-100 relative">
-                        <MessageSquare className="h-3.5 w-3.5 text-slate-300 absolute -top-1.5 -left-1 bg-white rounded-full p-0.5" />
-                        <p className="text-slate-700 text-xs md:text-sm leading-relaxed italic">
+                      <div
+                        className="
+                       mt-4 sm:mt-5
+                        rounded-2xl
+                        border border-slate-200/70
+                        bg-slate-50/70
+                        p-3 sm:p-4 md:p-5
+                      "
+                      >
+                        {/* Message Header */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <div
+                            className="
+                            h-7 w-7
+                            rounded-lg
+                            bg-white
+                            border border-slate-200
+                            flex items-center justify-center
+                          "
+                          >
+                            <MessageSquare className="h-3.5 w-3.5 text-blue-600" />
+                          </div>
+
+                          <span
+                            className="
+                            text-[10px]
+                            md:text-[11px]
+                            font-bold
+                            uppercase
+                            tracking-widest
+                            text-slate-400
+                          "
+                          >
+                            Student Message
+                          </span>
+                        </div>
+
+                        {/* Actual Message */}
+                        <p
+                          className="
+                          text-slate-700
+                          text-xs md:text-sm
+                          leading-6
+                          break-words
+                        "
+                        >
                           "{q.message}"
                         </p>
                       </div>

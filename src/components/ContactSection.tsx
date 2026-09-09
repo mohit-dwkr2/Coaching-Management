@@ -121,6 +121,7 @@ export default function ContactSection() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
+                  type="text"
                   placeholder="Your Name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -128,6 +129,7 @@ export default function ContactSection() {
                   disabled={isSubmitting}
                 />
                 <Input
+                  type="tel"
                   placeholder="Phone Number"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -139,6 +141,8 @@ export default function ContactSection() {
               {/* ASLI EMAIL INPUT (Iska data ab overwrite nahi hoga) */}
               <Input
                 type="email"
+                name="email"
+                autoComplete="email"
                 placeholder="Your email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -189,7 +193,7 @@ export default function ContactSection() {
                 {isSubmitting ? (
                   <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending...</>
                 ) : (
-                  "Submit Admission Form"
+                  "Submit Form"
                 )}
               </Button>
               <p className="text-[10px] text-center text-slate-400 uppercase tracking-widest font-bold">

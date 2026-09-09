@@ -270,26 +270,32 @@ export default function StudentFeeDrawer({
       <SheetContent className="w-full sm:max-w-[520px] p-0 flex flex-col justify-between overflow-hidden bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
 
         {/* 1. HEADER SECTION */}
-        <div className="p-6 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800">
-          <SheetHeader className="space-y-1 text-left">
+        <div className="p-4 sm:p-6 pr-10 sm:pr-12 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800">
+          <SheetHeader className="space-y-1.5 text-left">
             <div className="flex items-center justify-between gap-2">
-              <SheetTitle className="text-xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
-                  <Wallet className="h-5 w-5" />
+              {/* Title with Icon */}
+              <SheetTitle className="text-base sm:text-xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 min-w-0">
+                <div className="p-1.5 sm:p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 shrink-0">
+                  <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
-                Student Fee Ledger
+                <span className="truncate">Student Fee Ledger</span>
               </SheetTitle>
+
+              {/* Status Badge */}
               {status && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                <span className="px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
                   {status}
                 </span>
               )}
             </div>
-            <SheetDescription className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Detailed ledger overview, fee breakup, and transaction history.
+
+            {/* Description */}
+            <SheetDescription className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-normal">
+            Complete student fee details and payment history.
             </SheetDescription>
           </SheetHeader>
         </div>
+
 
         {/* 2. SCROLLABLE CONTENT BODY */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
@@ -387,7 +393,7 @@ export default function StudentFeeDrawer({
                   </div>
 
                   <div className="flex justify-between items-center pt-2">
-                    <span className="text-slate-600 dark:text-slate-400 font-medium">Grand Total</span>
+                    <span className="text-slate-600 dark:text-slate-400 font-medium">Total Fee</span>
                     <span className="font-bold text-slate-900 dark:text-slate-100">₹{studentFee.total_fee.toLocaleString("en-IN")}</span>
                   </div>
 

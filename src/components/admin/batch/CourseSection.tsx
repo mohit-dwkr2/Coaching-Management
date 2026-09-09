@@ -133,7 +133,7 @@ export default function CourseSection({
               </span>
             </div>
             <p className="text-slate-500 font-medium text-xs sm:text-sm mt-0.5">
-              Manage all available courses for your coaching institute.
+              Manage all available courses.
             </p>
           </div>
         </div>

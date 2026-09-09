@@ -290,114 +290,121 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
     );
   }
 
-return (
-  <div className="space-y-6 pt-">
-    {/* Section Header Card */}
-    <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        {/* Title & Description */}
-        <div className="space-y-1 pt-8">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">
-            Fee Structures
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Create and manage course fee structures and pricing tiers.
-          </p>
+  return (
+    <div className="space-y-6 pt-">
+      {/* Section Header Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+          {/* Title & Description */}
+          <div className="space-y-1 pt-4 sm:pt-8 min-w-0">
+            <h2 className="text-xl sm:text-xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">
+              Fee Structures
+            </h2>
+
+            <p className="text-[12px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+              Create and manage course fee structures and pricing tiers.
+            </p>
+          </div>
+
+          {/* Primary Action Button */}
+          <Button
+            onClick={handleCreateOpen}
+            size="sm"
+            className="h-10 w-full sm:w-auto px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-2 shadow-md shadow-blue-500/20 active:scale-95 transition-all self-start sm:self-auto shrink-0"
+          >
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span>Create Structure</span>
+          </Button>
         </div>
 
-        {/* Primary Action Button */}
-        <Button 
-          onClick={handleCreateOpen} 
-          size="sm" 
-          className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-2 shadow-md shadow-blue-500/20 active:scale-95 transition-all self-start sm:self-auto"
-        >
-          <Plus className="h-4 w-4 stroke-[2.5]" /> 
-          <span>Create Structure</span>
-        </Button>
+        {/* Modern Filter Pills Bar */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+
+          <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mr-1 uppercase tracking-wider">
+            Filter:
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${statusFilter === "all"
+                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+              }`}
+          >
+            <span>All</span>
+
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] ${statusFilter === "all"
+                  ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900"
+                  : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                }`}
+            >
+              {totalCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter("active")}
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${statusFilter === "active"
+                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+              }`}
+          >
+            <span>Active</span>
+
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] ${statusFilter === "active"
+                  ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900"
+                  : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                }`}
+            >
+              {activeCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter("inactive")}
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${statusFilter === "inactive"
+                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+              }`}
+          >
+            <span>Inactive</span>
+
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] ${statusFilter === "inactive"
+                  ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900"
+                  : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                }`}
+            >
+              {inactiveCount}
+            </span>
+          </button>
+
+        </div>
       </div>
 
-      {/* Modern Filter Pills Bar */}
-      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 mr-1 uppercase tracking-wider text-[10px]">
-          Filter:
-        </span>
+      {/* Cards Section */}
+      <FeeStructureCards
+        items={filteredStructures}
+        onEdit={handleEditOpen}
+        onDelete={handleDelete}
+        onToggleStatus={handleToggleStatus}
+      />
 
-        <button
-          type="button"
-          onClick={() => setStatusFilter("all")}
-          className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
-            statusFilter === "all"
-              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-          }`}
-        >
-          <span>All</span>
-          <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-            statusFilter === "all" 
-              ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900" 
-              : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-          }`}>
-            {totalCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setStatusFilter("active")}
-          className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
-            statusFilter === "active"
-              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-          }`}
-        >
-          <span>Active</span>
-          <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-            statusFilter === "active" 
-              ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900" 
-              : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-          }`}>
-            {activeCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setStatusFilter("inactive")}
-          className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
-            statusFilter === "inactive"
-              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-          }`}
-        >
-          <span>Inactive</span>
-          <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-            statusFilter === "inactive" 
-              ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900" 
-              : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-          }`}>
-            {inactiveCount}
-          </span>
-        </button>
-      </div>
+      {/* Drawer Section */}
+      <FeeStructureDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSave={handleSave}
+        structure={selectedStructure}
+        courses={courses}
+        saving={saving}
+      />
     </div>
-
-    {/* Cards Section */}
-    <FeeStructureCards
-      items={filteredStructures}
-      onEdit={handleEditOpen}
-      onDelete={handleDelete}
-      onToggleStatus={handleToggleStatus}
-    />
-
-    {/* Drawer Section */}
-    <FeeStructureDrawer
-      isOpen={drawerOpen}
-      onClose={() => setDrawerOpen(false)}
-      onSave={handleSave}
-      structure={selectedStructure}
-      courses={courses}
-      saving={saving}
-    />
-  </div>
-);
+  );
 }

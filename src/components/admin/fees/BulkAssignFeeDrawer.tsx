@@ -607,7 +607,7 @@ export default function BulkAssignFeeDrawer({
 
               <div className="pt-2 border-t border-slate-100 flex justify-between font-bold text-slate-800">
 
-                <span>Total Base Fee</span>
+                <span>Total Fee</span>
 
                 <span>
                   ₹{" "}

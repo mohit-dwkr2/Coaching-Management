@@ -268,7 +268,7 @@ export default function ChangeFeeStructureDialog({
     return (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
 
-            <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="w-full max-w-lg h-[680px] max-h-[90vh] flex flex-col rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
 
                 {/* ========================= */}
                 {/* HEADER */}
@@ -306,7 +306,7 @@ export default function ChangeFeeStructureDialog({
                 {/* BODY */}
                 {/* ========================= */}
 
-                <div className="p-6 space-y-5">
+                <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-5">
 
                     {/* ========================= */}
                     {/* PAYMENT STATUS */}

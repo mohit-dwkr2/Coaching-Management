@@ -124,89 +124,145 @@ export default function StudentFeeTable({
 
   // 3. Main Data View (Responsive: Mobile Cards + Desktop Table)
   return (
-    <div className="space-y-4 w-full">
-      {/* MOBILE VIEW (CARD LAYOUT - Visible only on small screens) */}
-      <div className="grid gap-3 md:hidden">
-        {items.map((ledger) => (
-          <div
+  <div className="space-y-4 w-full">
+    {/* MOBILE VIEW (COMPACT ACCORDION LIST) */}
+    <div className="md:hidden space-y-2 w-full">
+      {items.map((ledger) => {
+        const studentName = ledger.student?.name ?? "-";
+        const initials =
+          studentName !== "-"
+            ? studentName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()
+            : "?";
+
+        return (
+          <details
             key={ledger.id}
-            className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3"
+            className="group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 transition-all overflow-hidden"
           >
-            {/* Header: Student Name & Status */}
-            <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
-              <div>
-                <h4 className="font-black text-slate-900 dark:text-slate-100 text-base">
-                  {ledger.student?.name ?? "-"}
-                </h4>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            {/* Always Visible Summary Header */}
+            <summary className="flex items-center justify-between p-2.5 cursor-pointer list-none select-none">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {/* Avatar */}
+                <div className="h-7 w-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                  {initials}
+                </div>
+
+                {/* Name & ID/Course */}
+                <div className="min-w-0">
+                  <p className="font-bold text-slate-900 dark:text-slate-100 text-xs truncate leading-tight">
+                    {studentName}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium truncate">
                     {ledger.course?.course_name ?? "-"}
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                    {ledger.student?.batch?.batch_name ?? "-"}
-                  </span>
+                  </p>
                 </div>
               </div>
-              <div>{getStatusBadge(ledger.status)}</div>
+
+              {/* Status & Toggle Arrow */}
+              <div className="flex items-center gap-2 shrink-0">
+                {getStatusBadge(ledger.status)}
+                <span className="text-slate-400 text-xs group-open:rotate-180 transition-transform duration-200">
+                  ▼
+                </span>
+              </div>
+            </summary>
+
+            {/* Collapsible Details */}
+            <div className="px-3 pb-3 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2.5 bg-slate-50/50 dark:bg-slate-900/50">
+              {/* Batch Tag */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  Batch: {ledger.student?.batch?.batch_name ?? "-"}
+                </span>
+              </div>
+
+              {/* Grid Fee Details */}
+              <div className="grid grid-cols-2 gap-2 text-xs py-1">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">
+                    Final Fee
+                  </span>
+                  <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                    ₹{ledger.final_fee.toLocaleString("en-IN")}
+                  </p>
+                </div>
+
+                <div className="space-y-0.5 text-right">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">
+                    Collected
+                  </span>
+                  <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                    ₹{ledger.paid_amount.toLocaleString("en-IN")}
+                  </p>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">
+                    Outstanding
+                  </span>
+                  <p
+                    className={`font-bold text-sm ${
+                      ledger.remaining_amount > 0
+                        ? "text-rose-600 dark:text-rose-400"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    ₹{ledger.remaining_amount.toLocaleString("en-IN")}
+                  </p>
+                </div>
+
+                <div className="space-y-0.5 text-right">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">
+                    Due Date
+                  </span>
+                  <p className="font-medium text-slate-600 dark:text-slate-300">
+                    {ledger.next_due_date
+                      ? new Date(ledger.next_due_date).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )
+                      : "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Mobile Actions */}
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(ledger)}
+                  className="flex-1 h-9 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl gap-1.5 text-xs font-bold shadow-none"
+                >
+                  <Eye className="h-3.5 w-3.5" /> View Details
+                </Button>
+
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onCollect?.(ledger)}
+                  className="flex-1 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl gap-1.5 text-xs font-bold shadow-sm"
+                >
+                  <CreditCard className="h-3.5 w-3.5" /> Collect
+                </Button>
+              </div>
             </div>
+          </details>
+        );
+      })}
+    </div>
 
-            {/* Grid Data Items */}
-            <div className="grid grid-cols-2 gap-2.5 text-xs py-1">
-              <div className="space-y-0.5">
-                <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Final Fee</span>
-                <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">₹{ledger.final_fee.toLocaleString("en-IN")}</p>
-              </div>
 
-              <div className="space-y-0.5 text-right">
-                <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Collected</span>
-                <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">₹{ledger.paid_amount.toLocaleString("en-IN")}</p>
-              </div>
-
-              <div className="space-y-0.5">
-                <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Outstanding</span>
-                <p className={`font-bold text-sm ${ledger.remaining_amount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-500"}`}>
-                  ₹{ledger.remaining_amount.toLocaleString("en-IN")}
-                </p>
-              </div>
-
-              <div className="space-y-0.5 text-right">
-                <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Due Date</span>
-                <p className="font-medium text-slate-600 dark:text-slate-300">
-                  {ledger.next_due_date
-                    ? new Date(ledger.next_due_date).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "-"}
-                </p>
-              </div>
-            </div>
-
-            {/* Mobile Actions */}
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEdit(ledger)}
-                className="flex-1 h-9 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl gap-1.5 text-xs font-bold shadow-none"
-              >
-                <Eye className="h-3.5 w-3.5" /> View Details
-              </Button>
-
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => onCollect?.(ledger)}
-                className="flex-1 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl gap-1.5 text-xs font-bold shadow-sm"
-              >
-                <CreditCard className="h-3.5 w-3.5" /> Collect
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-
+    
       {/* DESKTOP VIEW (TABLE LAYOUT - Fully Fluid & No Horizontal Scroll) */}
       <div className="hidden md:block rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm w-full">
         <Table className="w-full table-auto">

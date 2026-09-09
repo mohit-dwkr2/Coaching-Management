@@ -97,40 +97,40 @@ export default function CollectPaymentDrawer({
 
 
   useEffect(() => {
-  if (!isOpen || !studentFee) {
-    initializedRef.current = null;
-    return;
-  }
+    if (!isOpen || !studentFee) {
+      initializedRef.current = null;
+      return;
+    }
 
-  const formKey = `${studentFee.id}`;
+    const formKey = `${studentFee.id}`;
 
-  // Already initialized for this drawer/student.
-  // Do NOT reset form on normal re-renders.
-  if (initializedRef.current === formKey) {
-    return;
-  }
+    // Already initialized for this drawer/student.
+    // Do NOT reset form on normal re-renders.
+    if (initializedRef.current === formKey) {
+      return;
+    }
 
-  initializedRef.current = formKey;
+    initializedRef.current = formKey;
 
-  console.log("INITIALIZING PAYMENT FORM:", formKey);
+    console.log("INITIALIZING PAYMENT FORM:", formKey);
 
-  const defaultFeePeriod =
-    studentFee.next_due_date
-      ? new Date(studentFee.next_due_date)
-      : studentFee.admission_date
-        ? new Date(studentFee.admission_date)
-        : null;
+    const defaultFeePeriod =
+      studentFee.next_due_date
+        ? new Date(studentFee.next_due_date)
+        : studentFee.admission_date
+          ? new Date(studentFee.admission_date)
+          : null;
 
-  setFormData({
-    amount: "",
-    paymentDate: new Date(),
-    feePeriodFrom: defaultFeePeriod,
-    paymentMode: "Cash",
-    monthsCovered: 1,
-    referenceNo: "",
-    remarks: "",
-  });
-}, [isOpen, studentFee?.id]);
+    setFormData({
+      amount: "",
+      paymentDate: new Date(),
+      feePeriodFrom: defaultFeePeriod,
+      paymentMode: "Cash",
+      monthsCovered: 1,
+      referenceNo: "",
+      remarks: "",
+    });
+  }, [isOpen, studentFee?.id]);
 
   const [loading, setLoading] = useState(false);
 
@@ -144,28 +144,28 @@ export default function CollectPaymentDrawer({
       <SheetContent className="w-full sm:max-w-[620px] p-0 flex flex-col justify-between overflow-hidden bg-white dark:bg-slate-950 border-l border-slate-200/80 dark:border-slate-800/80 shadow-2xl transition-all">
 
         {/* 1. CLEAN MODERN HEADER */}
-        <div className="p-6 pb-5 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800/80 shrink-0">
+        <div className="p-4 sm:p-6 pb-4 sm:pb-5 pr-10 sm:pr-12 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800/80 shrink-0">
           <SheetHeader className="space-y-1 text-left">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-blue-600 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center shadow-md">
+            <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-blue-600 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center shadow-md shrink-0">
                   <CreditCard className="h-4 w-4" />
                 </div>
-                <div>
-                  <SheetTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                <div className="min-w-0">
+                  <SheetTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight truncate">
                     Collect Payment
                   </SheetTitle>
-                  <SheetDescription className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    Record transaction details & issue official receipt
+                  <SheetDescription className="text-[11px] sm:text-sm text-slate-500 dark:text-slate-400 font-medium truncate">
+                  Record payment details and generate receipt.
                   </SheetDescription>
                 </div>
               </div>
 
               {/* Status Pill Indicator */}
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              {/* <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Active Session
-              </span>
+              </span> */}
             </div>
           </SheetHeader>
         </div>

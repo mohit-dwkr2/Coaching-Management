@@ -1515,25 +1515,28 @@ const StudentFeeSection = ({
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Top Bar Action (Export Button) */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 sm:pb-2 border-b border-slate-100 dark:border-slate-800">
+
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
             Student Fee Management
           </h2>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            Monitor collections, manage student ledgers, and export financial audit logs.
+
+          <p className="text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
+            Manage student fees, payments, and outstanding balances.
           </p>
         </div>
 
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
 
           {true && (
             <Button
               onClick={() => setPreviousDuesOpen(true)}
               variant="outline"
-              className="h-10 px-3.5 rounded-xl border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 font-bold text-xs gap-2"
-            >Previous Year Dues
+              className="h-9 sm:h-10 flex-1 sm:flex-none px-3 sm:px-3.5 rounded-xl border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 font-bold text-[11px] sm:text-xs gap-1.5 sm:gap-2"
+            >
+              Previous Year Dues
 
               <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-amber-200 text-amber-900 text-[10px] font-extrabold">
                 {previousDues.length}
@@ -1543,38 +1546,38 @@ const StudentFeeSection = ({
 
           <Button
             onClick={() => setIsExportModalOpen(true)}
-            className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-2 shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+            className="h-9 sm:h-10 flex-1 sm:flex-none px-3 sm:px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] sm:text-xs gap-1.5 sm:gap-2 shadow-md shadow-blue-500/20 active:scale-95 transition-all"
           >
             <FileSpreadsheet className="h-4 w-4 stroke-[2.2]" />
             <span>Export Report</span>
           </Button>
-
         </div>
 
 
-        {previousDuesOpen && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 backdrop-blur-md p-4 sm:p-6">
 
-            <div className="w-full max-w-5xl max-h-[85vh] overflow-hidden rounded-[28px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-[0_25px_80px_rgba(15,23,42,0.25)] flex flex-col">
+        {previousDuesOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 backdrop-blur-md p-3 sm:p-6">
+
+            <div className="w-full max-w-5xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden rounded-2xl sm:rounded-[28px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-[0_25px_80px_rgba(15,23,42,0.25)] flex flex-col">
 
               {/* Header */}
-              <div className="relative flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-slate-50/80 via-white to-amber-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/10 shrink-0">
+              <div className="relative flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-slate-50/80 via-white to-amber-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/10 shrink-0">
 
                 {/* Ambient Glow */}
                 <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/[0.05] rounded-full blur-3xl pointer-events-none" />
 
-                <div className="relative flex items-center gap-3.5">
+                <div className="relative flex items-center gap-2.5 sm:gap-3.5 min-w-0">
 
-                  <div className="h-11 w-11 rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/50 flex items-center justify-center shrink-0 shadow-sm">
-                    <Receipt className="h-5 w-5" strokeWidth={2.2} />
+                  <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/50 flex items-center justify-center shrink-0 shadow-sm">
+                    <Receipt className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.2} />
                   </div>
 
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  <div className="min-w-0">
+                    <h2 className="text-base sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
                       Previous Year Dues
                     </h2>
 
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                    <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1 font-medium truncate">
                       Outstanding fees from previous academic years
                     </p>
                   </div>
@@ -1584,7 +1587,7 @@ const StudentFeeSection = ({
                 <Button
                   variant="outline"
                   onClick={() => setPreviousDuesOpen(false)}
-                  className="relative h-9 sm:h-10 px-3.5 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-xs transition-all"
+                  className="relative h-8 sm:h-10 px-3 sm:px-3.5 rounded-lg sm:rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-[11px] sm:text-xs transition-all shrink-0"
                 >
                   Close
                 </Button>
@@ -1593,17 +1596,17 @@ const StudentFeeSection = ({
 
 
               {/* Body */}
-              <div className="max-h-[65vh] overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-slate-950/30">
+              <div className="max-h-[75vh] sm:max-h-[65vh] overflow-y-auto p-3 sm:p-6 bg-slate-50/50 dark:bg-slate-950/30">
 
                 {previousDues.length === 0 ? (
 
-                  <div className="py-16 text-center">
+                  <div className="py-12 sm:py-16 text-center">
 
-                    <div className="mx-auto h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-sm">
+                    <div className="mx-auto h-11 w-11 sm:h-12 sm:w-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-sm">
                       <Receipt className="h-5 w-5 text-slate-400" />
                     </div>
 
-                    <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-4">
+                    <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 mt-4">
                       No previous dues found.
                     </p>
 
@@ -1611,55 +1614,55 @@ const StudentFeeSection = ({
 
                 ) : (
 
-                  <div className="space-y-3">
+                  <div className="space-y-2.5 sm:space-y-3">
 
                     {previousDues.map((due) => (
 
                       <div
                         key={due.id}
-                        className="group rounded-2xl border border-amber-200/70 dark:border-amber-900/50 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200"
+                        className="group rounded-xl sm:rounded-2xl border border-amber-200/70 dark:border-amber-900/50 bg-white dark:bg-slate-900 p-3.5 sm:p-5 shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-800 transition-all duration-200"
                       >
 
-                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
 
                           {/* Student Information */}
                           <div className="min-w-0">
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2.5 sm:gap-3">
 
-                              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/70 dark:border-amber-900/50 flex items-center justify-center text-amber-700 dark:text-amber-400 font-extrabold shrink-0">
+                              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/70 dark:border-amber-900/50 flex items-center justify-center text-amber-700 dark:text-amber-400 font-extrabold shrink-0">
                                 {due.student?.name?.charAt(0)?.toUpperCase() || "S"}
                               </div>
 
                               <div className="min-w-0">
-                                <p className="font-extrabold text-slate-900 dark:text-white truncate">
+                                <p className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate">
                                   {due.student?.name}
                                 </p>
 
-                                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
+                                <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
                                   Previous Academic Year
                                 </p>
                               </div>
 
                             </div>
 
-                            <div className="mt-3 space-y-1">
+                            <div className="mt-2.5 sm:mt-3 space-y-1">
 
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
                                 Course:{" "}
                                 <span className="font-semibold text-slate-700 dark:text-slate-300">
                                   {due.course?.course_name || "-"}
                                 </span>
                               </p>
 
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
                                 Batch:{" "}
                                 <span className="font-semibold text-slate-700 dark:text-slate-300">
                                   {due.batch?.batch_name || "-"}
                                 </span>
                               </p>
 
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
                                 Academic Year:{" "}
                                 <span className="font-semibold text-slate-700 dark:text-slate-300">
                                   {due.academic_year}
@@ -1674,11 +1677,11 @@ const StudentFeeSection = ({
                           {/* Remaining Due */}
                           <div className="md:min-w-[130px]">
 
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                               Remaining Due
                             </p>
 
-                            <p className="text-xl font-extrabold text-red-600 dark:text-red-400 mt-1">
+                            <p className="text-lg sm:text-xl font-extrabold text-red-600 dark:text-red-400 mt-0.5 sm:mt-1">
                               ₹{Number(due.remaining_amount).toLocaleString("en-IN")}
                             </p>
 
@@ -1692,7 +1695,7 @@ const StudentFeeSection = ({
                               setPaymentDrawerOpen(true);
                               setPreviousDuesOpen(false);
                             }}
-                            className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 active:scale-[0.98] transition-all shrink-0"
+                            className="h-9 sm:h-10 w-full md:w-auto px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] sm:text-xs shadow-md shadow-blue-600/20 active:scale-[0.98] transition-all shrink-0"
                           >
                             Collect Payment
                           </Button>
@@ -1713,7 +1716,6 @@ const StudentFeeSection = ({
 
           </div>
         )}
-
 
 
       </div>

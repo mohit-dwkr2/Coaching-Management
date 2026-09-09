@@ -17,7 +17,7 @@ import {
   PaymentFormProps,
   PaymentMode,
 } from "../types";
-import { CreditCard } from "lucide-react";
+import { AlertTriangle, CreditCard } from "lucide-react";
 
 
 const paymentModes: PaymentMode[] = [
@@ -37,25 +37,25 @@ export default function PaymentForm({
 }: PaymentFormProps) {
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 space-y-4 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700">
+    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 sm:p-5 space-y-4 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700">
 
       {/* Section Title Header */}
-      <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-slate-800/60">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+      <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-slate-800/60 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
             <CreditCard className="h-4 w-4" />
           </div>
-          <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
             Payment Information
           </h3>
         </div>
-        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md shrink-0">
           Entry Form
         </span>
       </div>
 
-      {/* Form Grid */}
-      <div className="grid grid-cols-3 gap-3.5">
+      {/* Form Grid - Responsive Cols */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
 
         {/* 1. Amount Input */}
         <div className="space-y-1.5">
@@ -141,7 +141,6 @@ export default function PaymentForm({
           </Select>
         </div>
 
-
         {/* 4. Fee Period From */}
         <div className="space-y-1.5">
           <Label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -168,13 +167,13 @@ export default function PaymentForm({
             className="bg-slate-50/70 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 transition-all cursor-pointer"
           />
 
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">
-            Defaults automatically from the current fee cycle. You can adjust it if needed.
+          <p className="text-[10px] text-amber-600 dark:text-amber-500/90 font-medium leading-tight flex items-center gap-1 mt-1">
+            <AlertTriangle className="h-3 w-3 shrink-0" />
+            <span>Defaults automatically from current fee cycle. Adjust only if needed.</span>
           </p>
         </div>
 
-
-        {/* 4. Payment Date */}
+        {/* 5. Payment Date */}
         <div className="space-y-1.5">
           <Label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Payment Date
@@ -195,10 +194,10 @@ export default function PaymentForm({
             className="bg-slate-50/70 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 transition-all cursor-pointer"
           />
         </div>
+
       </div>
 
-
-      {/* 5. Reference Number */}
+      {/* 6. Reference Number */}
       <div className="space-y-1.5">
         <Label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Reference / Txn ID <span className="text-slate-400 font-normal lowercase">(optional)</span>
@@ -216,7 +215,7 @@ export default function PaymentForm({
         />
       </div>
 
-      {/* 6. Remarks */}
+      {/* 7. Remarks */}
       <div className="space-y-1.5">
         <Label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Remarks <span className="text-slate-400 font-normal lowercase">(optional)</span>

@@ -267,11 +267,11 @@ export default function FeeAnalyticsDashboard({
 
         {/* Filter Label */}
         <div className="flex items-center gap-2.5 px-1">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm border border-slate-200/70 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm border border-slate-200/70 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
             <CalendarIcon className="h-4 w-4" />
           </div>
 
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-extrabold text-slate-800 dark:text-slate-100">
               Financial Overview
             </p>
@@ -284,16 +284,16 @@ export default function FeeAnalyticsDashboard({
 
 
         {/* Selectors */}
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-row">
 
           {/* Academic Year */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <select
               value={selectedAcademicYear}
               onChange={(e) =>
                 setSelectedAcademicYear(e.target.value)
               }
-              className="h-10 min-w-[145px] appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-9 text-xs font-bold text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600"
+              className="h-10 w-full min-w-0 appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-9 text-xs font-bold text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600 sm:min-w-[145px]"
             >
               {academicYears.map((year) => (
                 <option key={year} value={year}>
@@ -309,14 +309,14 @@ export default function FeeAnalyticsDashboard({
 
 
           {/* Course */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <select
               value={selectedCourse}
               onChange={(e) => {
                 setSelectedCourse(e.target.value);
                 setSelectedBatch("all");
               }}
-              className="h-10 min-w-[155px] appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-9 text-xs font-bold text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600"
+              className="h-10 w-full min-w-0 appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-9 text-xs font-bold text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600 sm:min-w-[155px]"
             >
               <option value="all">
                 All Courses
@@ -339,13 +339,13 @@ export default function FeeAnalyticsDashboard({
 
 
           {/* Batch */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <select
               value={selectedBatch}
               onChange={(e) =>
                 setSelectedBatch(e.target.value)
               }
-              className="h-10 min-w-[155px] appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-9 text-xs font-bold text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600"
+              className="h-10 w-full min-w-0 appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-9 text-xs font-bold text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600 sm:min-w-[155px]"
             >
               <option value="all">
                 All Batches

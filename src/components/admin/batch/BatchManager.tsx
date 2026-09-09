@@ -85,13 +85,13 @@ export default function BatchManager() {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/60 text-blue-700 text-xs font-bold mb-3 shadow-xs">
             <Sparkles size={13} className="text-blue-600" />
-            <span>Management Console</span>
+            {/* <span>Management Console</span> */}
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
             Batch Manager
           </h1>
           <p className="text-slate-500 font-medium text-sm sm:text-base mt-1.5">
-            Manage student batches, courses, and class assignments efficiently.
+             Manage batches, courses, and student assignments with ease.
           </p>
         </div>
       </div>

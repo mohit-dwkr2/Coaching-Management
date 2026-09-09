@@ -70,6 +70,53 @@ export default function BatchDrawer({
   }, [selectedBatch]);
 
 
+  const getTimeParts = (time: string) => {
+    if (!time) {
+      return {
+        hour: "",
+        minute: "00",
+        period: "AM",
+      };
+    }
+
+    const [hourString, minute] = time.split(":");
+    const hour24 = Number(hourString);
+
+    return {
+      hour: String(hour24 % 12 || 12),
+      minute: minute || "00",
+      period: hour24 >= 12 ? "PM" : "AM",
+    };
+  };
+
+  const updateTime = (
+    currentTime: string,
+    type: "hour" | "minute" | "period",
+    value: string,
+    setter: (value: string) => void
+  ) => {
+    const current = getTimeParts(currentTime);
+
+    const hour = type === "hour" ? value : current.hour;
+    const minute = type === "minute" ? value : current.minute;
+    const period = type === "period" ? value : current.period;
+
+    if (!hour) return;
+
+    let hour24 = Number(hour);
+
+    if (period === "AM") {
+      if (hour24 === 12) hour24 = 0;
+    } else {
+      if (hour24 !== 12) hour24 += 12;
+    }
+
+    setter(
+      `${String(hour24).padStart(2, "0")}:${minute.padStart(2, "0")}`
+    );
+  };
+
+
   const saveBatch = async () => {
 
     if (!selectedCourse) {
@@ -191,7 +238,7 @@ export default function BatchDrawer({
               <p className="text-slate-400 text-xs font-medium">
                 {selectedBatch
                   ? "Update batch details and schedules."
-                  : "Configure schedule and limits for the new batch."}
+                  : "Create a new batch with schedule and details."}
               </p>
             </div>
           </div>
@@ -205,8 +252,8 @@ export default function BatchDrawer({
           </button>
         </div>
 
-        {/* Form Fields */}
 
+        {/* Form Fields */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
 
           {/* Course Select */}
@@ -221,8 +268,8 @@ export default function BatchDrawer({
                 onChange={(e) => setSelectedCourse(e.target.value)}
                 disabled={!!selectedBatch}
                 className={`w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none ${selectedBatch
-                    ? "bg-slate-100 cursor-not-allowed text-slate-500"
-                    : "bg-slate-50/50 focus:bg-white cursor-pointer"
+                  ? "bg-slate-100 cursor-not-allowed text-slate-500"
+                  : "bg-slate-50/50 focus:bg-white cursor-pointer"
                   }`}
               >
                 <option value="">Choose a course</option>
@@ -262,7 +309,7 @@ export default function BatchDrawer({
           </div>
 
           {/* Description */}
-          <div>
+          {/* <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block">
                 Description
@@ -276,55 +323,134 @@ export default function BatchDrawer({
               placeholder="Add optional notes about syllabus pace, target exams, etc..."
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white p-3 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
             />
-          </div>
+          </div> */}
 
-          {/* Timing Inputs */}
-          <div className="grid grid-cols-2 gap-3.5">
-            <div>
-              <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block mb-2">
+
+
+          {/* Timing Inputs Group */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+
+            {/* Start Time */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] sm:text-xs font-extrabold text-slate-700 uppercase tracking-wider block">
                 Start Time
               </label>
-              <Input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="h-11 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white text-sm font-semibold transition-all focus-visible:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block mb-2">
-                End Time
-              </label>
-              <Input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="h-11 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white text-sm font-semibold transition-all focus-visible:ring-indigo-500"
-              />
-            </div>
-          </div>
 
-          {/* Days Select */}
-          <div>
-            <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block mb-2">
-              Schedule Days
-            </label>
-            <div className="relative">
-              <select
-                value={days}
-                onChange={(e) => setDays(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer appearance-none"
-              >
-                <option value="Daily">Daily</option>
-                <option value="Monday-Friday">Monday - Friday</option>
-                <option value="Weekend">Weekend</option>
-                {/* <option value="Custom">Custom Schedule</option> */}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
-                <ChevronDown size={16} />
+              <div className="flex items-center gap-1 sm:gap-1.5 p-1 rounded-2xl border border-slate-200 bg-slate-50/50 focus-within:bg-white focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all h-11">
+
+                {/* Hour */}
+                <select
+                  value={getTimeParts(startTime).hour}
+                  onChange={(e) =>
+                    updateTime(startTime, "hour", e.target.value, setStartTime)
+                  }
+                  className="flex-1 min-w-0 h-full px-1.5 sm:px-2 rounded-xl bg-transparent text-xs sm:text-sm font-bold text-slate-800 text-center focus:outline-none cursor-pointer appearance-none hover:bg-slate-100/60 transition-colors"
+                >
+                  <option value="">Hour</option>
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={String(i + 1)}>
+                      {i + 1}
+                    </option>
+                  ))}
+                </select>
+
+                <span className="font-extrabold text-slate-300 text-sm select-none">:</span>
+
+                {/* Minute */}
+                <select
+                  value={getTimeParts(startTime).minute}
+                  onChange={(e) =>
+                    updateTime(startTime, "minute", e.target.value, setStartTime)
+                  }
+                  className="flex-1 min-w-0 h-full px-1.5 sm:px-2 rounded-xl bg-transparent text-xs sm:text-sm font-bold text-slate-800 text-center focus:outline-none cursor-pointer appearance-none hover:bg-slate-100/60 transition-colors"
+                >
+                  {Array.from({ length: 60 }, (_, i) => {
+                    const minute = String(i).padStart(2, "0");
+                    return (
+                      <option key={minute} value={minute}>
+                        {minute}
+                      </option>
+                    );
+                  })}
+                </select>
+
+                {/* AM / PM Pill */}
+                <select
+                  value={getTimeParts(startTime).period}
+                  onChange={(e) =>
+                    updateTime(startTime, "period", e.target.value, setStartTime)
+                  }
+                  className="w-16 sm:w-20 shrink-0 h-full px-2 rounded-xl bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-black text-center focus:outline-none cursor-pointer border border-indigo-100/80 hover:bg-indigo-100/80 transition-colors"
+                >
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+
               </div>
             </div>
+
+            {/* End Time */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] sm:text-xs font-extrabold text-slate-700 uppercase tracking-wider block">
+                End Time
+              </label>
+
+              <div className="flex items-center gap-1 sm:gap-1.5 p-1 rounded-2xl border border-slate-200 bg-slate-50/50 focus-within:bg-white focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all h-11">
+
+                {/* Hour */}
+                <select
+                  value={getTimeParts(endTime).hour}
+                  onChange={(e) =>
+                    updateTime(endTime, "hour", e.target.value, setEndTime)
+                  }
+                  className="flex-1 min-w-0 h-full px-1.5 sm:px-2 rounded-xl bg-transparent text-xs sm:text-sm font-bold text-slate-800 text-center focus:outline-none cursor-pointer appearance-none hover:bg-slate-100/60 transition-colors"
+                >
+                  <option value="">Hour</option>
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={String(i + 1)}>
+                      {i + 1}
+                    </option>
+                  ))}
+                </select>
+
+                <span className="font-extrabold text-slate-300 text-sm select-none">:</span>
+
+                {/* Minute */}
+                <select
+                  value={getTimeParts(endTime).minute}
+                  onChange={(e) =>
+                    updateTime(endTime, "minute", e.target.value, setEndTime)
+                  }
+                  className="flex-1 min-w-0 h-full px-1.5 sm:px-2 rounded-xl bg-transparent text-xs sm:text-sm font-bold text-slate-800 text-center focus:outline-none cursor-pointer appearance-none hover:bg-slate-100/60 transition-colors"
+                >
+                  {Array.from({ length: 60 }, (_, i) => {
+                    const minute = String(i).padStart(2, "0");
+                    return (
+                      <option key={minute} value={minute}>
+                        {minute}
+                      </option>
+                    );
+                  })}
+                </select>
+
+                {/* AM / PM Pill */}
+                <select
+                  value={getTimeParts(endTime).period}
+                  onChange={(e) =>
+                    updateTime(endTime, "period", e.target.value, setEndTime)
+                  }
+                  className="w-16 sm:w-20 shrink-0 h-full px-2 rounded-xl bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-black text-center focus:outline-none cursor-pointer border border-indigo-100/80 hover:bg-indigo-100/80 transition-colors"
+                >
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+
+              </div>
+            </div>
+
           </div>
+
+
 
           {/* Max Students */}
           <div>

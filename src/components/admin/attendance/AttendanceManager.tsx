@@ -1194,7 +1194,7 @@ return (
               </h1>
 
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
-                Centralized command center for daily session tracking and logs.
+               Track and manage student attendance with ease.
               </p>
             </div>
 

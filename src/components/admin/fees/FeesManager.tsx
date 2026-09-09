@@ -82,7 +82,7 @@ return (
               </div>
 
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium max-w-2xl leading-relaxed">
-                Configure institutional pricing plans, track collections, and manage client-student financial statements.
+                 Manage student fees, payments, and outstanding balances with ease.
               </p>
 
             </div>

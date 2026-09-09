@@ -123,8 +123,8 @@ export default function StudentTable({
                     <tr
                       key={s.id}
                       className={`transition-all duration-200 group ${isSelected
-                          ? "bg-blue-50/40 hover:bg-blue-50/60"
-                          : "hover:bg-slate-50/80"
+                        ? "bg-blue-50/40 hover:bg-blue-50/60"
+                        : "hover:bg-slate-50/80"
                         }`}
                     >
                       {/* Checkbox Column */}
@@ -199,8 +199,8 @@ export default function StudentTable({
                       <td className="px-5 py-4">
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${s.status === "active"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80"
-                              : "bg-slate-100 text-slate-600 border border-slate-200/80"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80"
+                            : "bg-slate-100 text-slate-600 border border-slate-200/80"
                             }`}
                         >
                           <span
@@ -263,115 +263,76 @@ export default function StudentTable({
         </div>
       </div>
 
-
-      {/* ================= MOBILE CARDS VIEW (Visible on mobile/small screens) ================= */}
-      <div className="md:hidden grid grid-cols-1 gap-4">
-        {students.length === 0 ? (
-          <div className="bg-white/80 backdrop-blur-md p-10 rounded-3xl border border-dashed border-slate-300 text-center shadow-xs">
-            <p className="text-slate-800 font-black text-base">No students found</p>
-            <p className="text-slate-400 text-xs mt-1 font-medium">Try refining your search terms or filters.</p>
-          </div>
-        ) : (
-          students.map((s) => {
-            const isSelected = selectedStudents.includes(s.id);
-            return (
-              <div
-                key={s.id}
-                className={`relative overflow-hidden bg-white p-5 rounded-3xl border transition-all space-y-4 ${isSelected
-                    ? "border-blue-500/80 bg-blue-50/20 shadow-md shadow-blue-500/5"
-                    : "border-slate-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)]"
-                  }`}
-              >
-                {/* Top Status Border Accent */}
-                <div
-                  className={`absolute top-0 left-0 right-0 h-1 ${s.status === "active" ? "bg-emerald-500" : "bg-slate-300"
-                    }`}
-                ></div>
-
-                {/* Header: Checkbox, Avatar, Name & ID */}
-                <div className="flex justify-between items-start pt-1 gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {/* Checkbox Integration */}
-                    <div className="shrink-0 pt-0.5">
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleStudentSelection(s.id)}
-                        className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 rounded-md border-slate-300 h-5 w-5"
-                      />
-                    </div>
-
-                    {/* Avatar */}
-                    <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-md shadow-blue-500/20">
-                      {getInitials(s.name)}
-                    </div>
-
-                    {/* Name & Roll / ID */}
-                    <div className="min-w-0">
-                      <h4 className="font-extrabold text-slate-900 text-base leading-tight truncate">
-                        {s.name}
-                      </h4>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="font-mono text-xs text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded-md">
-                          {s.student_id || "N/A"}
-                        </span>
-                        {s.roll_number && (
-                          <span className="text-xs text-slate-400 font-bold">
-                            #{s.roll_number}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Active Status Pulse Indicator */}
-                  <span
-                    className={`h-2.5 w-2.5 rounded-full shrink-0 mt-1 ${s.status === "active" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
-                      }`}
+      {/* ================= COMPACT ACCORDION LIST VIEW ================= */}
+      <div className="md:hidden space-y-2">
+        {students.map((s) => {
+          const isSelected = selectedStudents.includes(s.id);
+          return (
+            <details
+              key={s.id}
+              className={`group bg-white rounded-xl border transition-all overflow-hidden ${isSelected ? "border-blue-500 bg-blue-50/20" : "border-slate-200"
+                }`}
+            >
+              {/* Always Visible Summary Header */}
+              <summary className="flex items-center justify-between p-2.5 cursor-pointer list-none select-none">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => toggleStudentSelection(s.id)}
+                    className="rounded h-4 w-4"
+                    onClick={(e) => e.stopPropagation()}
                   />
+                  <div className="h-7 w-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    {getInitials(s.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-900 text-xs truncate leading-tight">{s.name}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">#{s.student_id || "N/A"}</p>
+                  </div>
                 </div>
 
-                {/* Details Pills */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-semibold text-slate-700">
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center gap-2.5">
-                    <Phone size={14} className="text-slate-400 shrink-0" />
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`h-2 w-2 rounded-full ${s.status === "active" ? "bg-emerald-500" : "bg-slate-300"}`} />
+                  {/* Arrow Indicator */}
+                  <span className="text-slate-400 text-xs group-open:rotate-180 transition-transform">▼</span>
+                </div>
+              </summary>
+
+              {/* Collapsible Details */}
+              <div className="px-3 pb-3 pt-1 border-t border-slate-100 space-y-2.5 bg-slate-50/50">
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <Phone size={12} className="text-slate-400" />
                     <span className="truncate">{s.mobile}</span>
                   </div>
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center gap-2.5">
-                    <GraduationCap size={14} className="text-blue-600 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <GraduationCap size={12} className="text-blue-600" />
                     <span className="truncate">{s.course?.course_name || s.class || "Unassigned"}</span>
                   </div>
                 </div>
 
-                {/* Notes Access Toggle Container */}
-                <div className="flex items-center justify-between bg-slate-50/80 p-3 rounded-2xl border border-slate-100">
-                  <span className="text-xs font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
-                    <ShieldCheck size={14} className="text-slate-400" />
-                    Notes Access
+                <div className="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-200/60">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                    <ShieldCheck size={12} /> Notes Access
                   </span>
                   {inactive ? (
-                    <span className="text-xs font-bold text-slate-400">
-                      Inactive
-                    </span>
+                    <span className="text-[10px] text-slate-400">Inactive</span>
                   ) : (
-                    <Switch
-                      checked={s.notes_access}
-                      onCheckedChange={() => toggleNotesAccess(s)}
-                    />
+                    <Switch checked={s.notes_access} onCheckedChange={() => toggleNotesAccess(s)} className="scale-75 origin-right" />
                   )}
                 </div>
 
-                {/* Full Profile Button */}
                 <Button
                   onClick={() => openStudentDrawer(s)}
-                  className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-11 font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full bg-slate-900 text-white rounded-lg h-7 font-bold text-xs flex items-center justify-center gap-1.5"
                 >
-                  <Eye size={16} />
-                  <span>View Full Profile</span>
+                  <Eye size={12} />
+                  <span>View Profile</span>
                 </Button>
               </div>
-            );
-          })
-        )}
+            </details>
+          );
+        })}
       </div>
 
     </>

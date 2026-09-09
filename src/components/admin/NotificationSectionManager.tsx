@@ -238,7 +238,7 @@ const NotificationSectionManager = () => {
                   Notification Target
                 </label>
 
-                <div className="flex gap-6 flex-wrap">
+                <div className="flex gap-4 sm:gap-6 flex-wrap">
 
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -416,10 +416,10 @@ const NotificationSectionManager = () => {
 
                       <span
                         className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${notif.target_type === "global"
-                            ? "bg-blue-100 text-blue-600"
-                            : notif.target_type === "course"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-orange-100 text-orange-600"
+                          ? "bg-blue-100 text-blue-600"
+                          : notif.target_type === "course"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-orange-100 text-orange-600"
                           }`}
                       >
 
@@ -450,7 +450,11 @@ const NotificationSectionManager = () => {
 
                       <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full">
                         <Calendar size={12} />
-                        {new Date(notif.created_at).toLocaleDateString()}
+                        {new Date(notif.created_at).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </span>
                     </div>
 
@@ -464,7 +468,7 @@ const NotificationSectionManager = () => {
                     </div>
                   </div>
 
-                  <h3 className="font-black text-slate-800 text-lg group-hover:text-blue-600 transition-colors truncate">
+                  <h3 className="font-black text-slate-800 text-base sm:text-lg group-hover:text-blue-600 transition-colors truncate">
                     {notif.title}
                   </h3>
 

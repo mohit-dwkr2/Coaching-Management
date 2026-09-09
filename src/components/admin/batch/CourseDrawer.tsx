@@ -130,7 +130,7 @@ export default function CourseDrawer({
             </h2>
             <p className="text-slate-400 text-xs font-medium">
               {selectedCourse
-                ? "Update course details and settings."
+                ? "Update course details."
                 : "Add a new course program to your institute."}
             </p>
           </div>

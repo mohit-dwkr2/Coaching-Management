@@ -10,15 +10,16 @@ interface CourseTableProps {
 export default function CourseTable({
   courses, onEdit, onDelete,
 }: CourseTableProps) {
- return (
+  return (
     <div className="w-full relative">
       {/* Container - Overflow hidden removed so Drawers are never clipped */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs">
-        
+
+
         {/* ================= 1. MOBILE CARD VIEW (Mobile Screen ke liye) ================= */}
-        <div className="block sm:hidden divide-y divide-slate-100">
+        <div className="block sm:hidden space-y-3 bg-slate-50/50 p-2 rounded-2xl">
           {courses.length === 0 ? (
-            <div className="p-8 text-center">
+            <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-200">
               <div className="h-14 w-14 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-300 mx-auto mb-3">
                 <BookOpen size={28} />
               </div>
@@ -31,31 +32,34 @@ export default function CourseTable({
             </div>
           ) : (
             courses.map((course: any) => (
-              <div key={course.id} className="p-4 space-y-3.5 bg-white">
+              <div
+                key={course.id}
+                className="p-3.5 space-y-3 bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+              >
                 {/* Header: Title + Status */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-                      <BookOpen size={18} strokeWidth={2.2} />
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-9 w-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                      <BookOpen size={16} strokeWidth={2.2} />
                     </div>
-                    <div>
-                      <h4 className="font-extrabold text-slate-900 text-sm leading-snug">
+                    <div className="min-w-0">
+                      <h4 className="font-extrabold text-slate-900 text-sm leading-snug truncate">
                         {course.course_name}
                       </h4>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mt-0.5">
                         ID: #{String(course.id).substring(0, 6)}
                       </span>
                     </div>
                   </div>
 
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black border border-emerald-200/60 shrink-0 capitalize">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black border border-emerald-200/60 shrink-0 capitalize">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     {course.status || "Active"}
                   </span>
                 </div>
 
                 {/* Description */}
-                <p className="text-xs text-slate-500 font-medium line-clamp-2 bg-slate-50/60 p-2.5 rounded-xl border border-slate-100">
+                <p className="text-xs text-slate-500 font-medium line-clamp-2 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100/80 leading-relaxed">
                   {course.description ? (
                     course.description
                   ) : (
@@ -64,14 +68,14 @@ export default function CourseTable({
                 </p>
 
                 {/* Metrics Badges + Actions */}
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-extrabold text-xs border border-slate-200/60">
-                      <Layers size={13} className="text-slate-400" />
+                <div className="flex items-center justify-between pt-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-slate-700 font-extrabold text-[11px] border border-slate-200/60">
+                      <Layers size={12} className="text-slate-400" />
                       {course.batchCount ?? 0}
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-extrabold text-xs border border-blue-100">
-                      <Users size={13} className="text-blue-500" />
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-700 font-extrabold text-[11px] border border-blue-100">
+                      <Users size={12} className="text-blue-500" />
                       {course.studentCount ?? 0}
                     </span>
                   </div>
@@ -82,17 +86,17 @@ export default function CourseTable({
                       size="sm"
                       variant="ghost"
                       onClick={() => onEdit(course)}
-                      className="h-9 px-3 rounded-xl text-indigo-600 bg-indigo-50 font-bold text-xs"
+                      className="h-8 px-2.5 rounded-xl text-indigo-600 bg-indigo-50 hover:bg-indigo-100 font-bold text-xs"
                     >
-                      <Pencil size={14} className="mr-1" /> Edit
+                      <Pencil size={13} className="mr-1" /> Edit
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       onClick={() => onDelete(course)}
-                      className="h-9 w-9 rounded-xl text-rose-500 hover:bg-rose-50"
+                      className="h-8 w-8 rounded-xl text-rose-500 hover:bg-rose-50"
                     >
-                      <Trash2 size={15} />
+                      <Trash2 size={14} />
                     </Button>
                   </div>
                 </div>

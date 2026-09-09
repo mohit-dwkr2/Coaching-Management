@@ -239,7 +239,7 @@ export default function StudyMaterialManager() {
     <div className="w-full max-w-6xl mx-auto p-4 md:p-0 animate-in fade-in duration-500">
       <div className="mb-6 md:mb-8">
         <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Material Manager</h2>
-        <p className="text-slate-500 text-sm mt-1">Upload Your PDF Notes and keep storage clean.</p>
+        <p className="text-slate-500 text-sm mt-1">Upload Your PDF Notes and Study Material.</p>
       </div>
 
       <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 mb-8 md:mb-10">
@@ -329,8 +329,24 @@ export default function StudyMaterialManager() {
             {editingId ? "Update Material" : "Add to Library"}
           </Button>
           {editingId && (
-            <Button variant="ghost" onClick={cancelEdit} className="rounded-xl px-6 text-slate-500 font-bold h-11 md:h-10 w-full sm:w-auto">
-              <X className="h-4 w-4 mr-2" /> Cancel
+            <Button
+              variant="ghost"
+              onClick={cancelEdit}
+              className="
+    rounded-xl
+    px-6
+    h-11 md:h-10
+    w-full sm:w-auto
+    font-bold
+    text-slate-600
+    border border-slate-300
+    bg-white
+    hover:bg-slate-50
+    hover:border-slate-400
+    transition-all
+  "
+            >
+              Cancel
             </Button>
           )}
         </div>

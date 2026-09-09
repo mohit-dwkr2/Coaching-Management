@@ -149,17 +149,6 @@ export default function Navbar() {
             );
           })}
 
-          <Link
-            to="/userlogin"
-            className="
-              px-4 py-2 text-sm font-bold
-              text-slate-600
-              hover:text-blue-700
-              transition-all
-            "
-          >
-            Study Material
-          </Link>
 
           <Link
             to="/about"
@@ -173,25 +162,56 @@ export default function Navbar() {
             About Us
           </Link>
 
+
+          <Link
+            to="/userlogin"
+            className="
+    inline-flex items-center justify-center
+    h-11
+    rounded-full
+    border border-blue-200
+    bg-white
+    px-5
+    text-sm font-bold
+    text-blue-700
+    shadow-sm
+    transition-all duration-200
+    hover:border-blue-300
+    hover:bg-blue-50
+    hover:shadow-md
+    active:scale-[0.98]
+  "
+          >
+            Student Login
+          </Link>
+
           <Button
             size="lg"
             className="
-              ml-4
-              rounded-full
-              px-4
-              shadow-lg
-              transition-transform
-              hover:scale-105
-              bg-blue-600
-              hover:bg-blue-700
-            "
+    ml-2
+    h-11
+    rounded-full
+    bg-blue-600
+    px-6
+    text-sm font-bold
+    text-white
+    shadow-md shadow-blue-600/20
+    transition-all duration-200
+    hover:bg-blue-700
+    hover:shadow-lg
+    hover:shadow-blue-600/25
+    hover:scale-[1.02]
+    active:scale-[0.98]
+  "
             asChild
           >
             <a href="/#contact">
               Join Now
             </a>
           </Button>
+
         </div>
+
 
         {/* Mobile Toggle */}
         <button
@@ -271,21 +291,6 @@ export default function Navbar() {
             );
           })}
 
-          <Link
-            to="/dashboard"
-            onClick={() => setOpen(false)}
-            className="
-              block
-              py-3
-              text-base
-              font-semibold
-              border-b
-              border-slate-200/70
-              text-slate-700
-            "
-          >
-            Study Material
-          </Link>
 
           <Link
             to="/about"
@@ -301,6 +306,30 @@ export default function Navbar() {
             "
           >
             About Us
+          </Link>
+
+          <Link
+            to="/dashboard"
+            onClick={() => setOpen(false)}
+            className="
+    flex items-center justify-center
+    w-full
+    h-11
+    rounded-full
+    border border-blue-200
+    bg-white
+    px-5
+    text-sm font-bold
+    text-blue-700
+    shadow-sm
+    transition-all duration-200
+    hover:border-blue-300
+    hover:bg-blue-50
+    hover:shadow-md
+    active:scale-[0.98]
+  "
+          >
+            Student Login
           </Link>
 
           <Button

@@ -261,7 +261,7 @@ batch:batch_id(
                     <Input
                       value={student?.name || ""}
                       disabled
-                      className="bg-slate-50 border-slate-200 font-semibold text-slate-800 disabled:opacity-100 rounded-xl"
+                      className="bg-slate-50 text-sm border-slate-200 font-semibold text-slate-800 disabled:opacity-100 rounded-xl"
                     />
                   </div>
                   <div>
@@ -271,7 +271,7 @@ batch:batch_id(
                     <Input
                       value={student?.course?.course_name || ""}
                       disabled
-                      className="bg-slate-50 border-slate-200 font-semibold text-slate-800 disabled:opacity-100 rounded-xl"
+                      className="bg-slate-50 text-sm border-slate-200 font-semibold text-slate-800 disabled:opacity-100 rounded-xl"
                     />
                   </div>
                 </div>
@@ -285,7 +285,7 @@ batch:batch_id(
                       student?.batch?.batch_name || "Not Assigned"
                     }
                     disabled
-                    className="bg-slate-50 border-slate-200 font-semibold text-slate-800 disabled:opacity-100 rounded-xl"
+                    className="bg-slate-50 text-sm border-slate-200 font-semibold text-slate-800 disabled:opacity-100 rounded-xl"
                   />
                 </div>
               </div>
@@ -366,7 +366,7 @@ batch:batch_id(
                   </div>
 
                   <div className="pt-2 border-t border-slate-100 flex justify-between font-bold text-slate-800">
-                    <span>Total Base Fee</span>
+                    <span>Total Fee</span>
                     <span>₹ {grandTotal.toLocaleString()}</span>
                   </div>
 
@@ -459,7 +459,7 @@ batch:batch_id(
                   <div className="flex justify-between text-xs text-slate-400 pt-1">
                     <span>Assigned On</span>
                     <span className="font-medium">
-                      {new Date(assignedFee.created_at).toLocaleDateString()}
+                     {new Date(assignedFee.created_at).toLocaleDateString("en-GB")}
                     </span>
                   </div>
                 </div>

@@ -413,7 +413,7 @@ export default function StudentDrawer({
                                             />
                                         ) : (
                                             <div className="flex items-center gap-3 mb-1.5">
-                                                <h2 className="text-xl xl:text-2xl font-black tracking-tight truncate text-white">
+                                                <h2 className="text-lg sm:text-xl xl:text-2xl font-black tracking-tight truncate text-white">
                                                     {student.name}
                                                 </h2>
                                                 <span
@@ -446,12 +446,16 @@ export default function StudentDrawer({
                                 </div>
                                 <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
                                     <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Joined On</p>
-                                    <p className="text-sm font-extrabold text-slate-800 mt-0.5 truncate">
-                                        {student.joined_at || "—"}
+                                    <p className="text-xs sm:text-sm font-extrabold text-slate-800 mt-0.5 truncate">
+                                        {student.joined_at
+                                            ? new Date(student.joined_at).toLocaleDateString("en-GB")
+                                            : "—"}
                                     </p>
                                 </div>
                                 <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
-                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Notes Access</p>
+                                    <p className="text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                        Notes Access
+                                    </p>
                                     <div className="mt-1">
                                         {student.notes_access ? (
                                             <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-600">
@@ -562,20 +566,14 @@ export default function StudentDrawer({
                                 <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1 flex items-center gap-2">
                                     <Briefcase size={14} className="text-blue-600" /> ERP Management
                                 </h4>
-
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {/* Full-Width Featured Card */}
-                                    <div className="sm:col-span-2">
-                                        <DrawerAppCard
-                                            icon={<CreditCard size={22} className="text-amber-600" />}
-                                            title="Assign Fees & Payments"
-                                            subtitle="View fee status, structure, and collect installments"
-                                            onClick={() => setIsAssignFeeDrawerOpen(true)}
-                                            featured
-                                        />
-                                    </div>
-
-                                    {/* Regular Size Cards */}
+                                    <DrawerAppCard
+                                        icon={<CreditCard size={22} className="text-amber-600" />}
+                                        title="Assign Fees"
+                                        subtitle="View fee status, structure, and collect installments"
+                                        onClick={() => setIsAssignFeeDrawerOpen(true)}
+                                        featured
+                                    />
 
                                     <DrawerAppCard
                                         icon={<Users size={20} className="text-indigo-600" />}
@@ -583,14 +581,6 @@ export default function StudentDrawer({
                                         subtitle="Allocate or update batch"
                                         onClick={() => setIsBatchDrawerOpen(true)}
                                     />
-
-                                    <DrawerAppCard
-                                        icon={<Calendar size={20} className="text-blue-600" />}
-                                        title="Attendance"
-                                        subtitle="Logs & attendance records"
-                                        onClick={() => handleComingSoon("Attendance Logging")}
-                                    />
-
                                 </div>
                             </div>
                         </div>

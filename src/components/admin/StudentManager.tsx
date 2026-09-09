@@ -907,7 +907,7 @@ const StudentManager = () => {
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                  Centralized command center for student enrollments and batch management.
+                 Manage student records, enrollments, and batches with ease.
                 </p>
               </div>
             </div>
