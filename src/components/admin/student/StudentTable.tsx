@@ -286,7 +286,7 @@ export default function StudentTable({
                     {getInitials(s.name)}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-slate-900 text-xs truncate leading-tight">{s.name}</p>
+                    <p className="font-bold text-slate-900 text-sm truncate leading-tight">{s.name}</p>
                     <p className="text-[10px] text-slate-400 font-mono">#{s.student_id || "N/A"}</p>
                   </div>
                 </div>

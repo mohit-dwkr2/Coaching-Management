@@ -73,56 +73,62 @@ const themeMap = {
   },
 };
 
-return (
-  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
-    {cards.map((card) => {
-      const Icon = card.icon;
-      const theme = themeMap[card.color] || themeMap.blue;
+ return (
+    <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6">
+      {cards.map((card) => {
+        const Icon = card.icon;
+        const theme = themeMap[card.color] || themeMap.blue;
 
-      return (
-        <div
-          key={card.title}
-          className={`group relative overflow-hidden bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 border-t-4 ${theme.borderTop} p-6 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between`}
-        >
-          {/* Subtle Ambient Hover Mesh Glow */}
+        return (
           <div
-            className={`absolute inset-0 bg-gradient-to-b ${theme.bgGlow} opacity-40 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
-          />
+            key={card.title}
+            className={`group relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-slate-800 border-t-4 ${theme.borderTop} p-3.5 sm:p-6 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between`}
+          >
+            {/* Subtle Ambient Hover Mesh Glow */}
+            <div
+              className={`absolute inset-0 bg-gradient-to-b ${theme.bgGlow} opacity-40 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
+            />
 
-          <div className="relative z-10">
-            {/* Top Row: Title Badge & Glass Icon */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                {card.title}
-              </span>
+            <div className="relative z-10">
+              {/* Top Row: Title Badge & Glass Icon */}
+              <div className="flex items-center justify-between gap-2 sm:gap-3">
+                <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest text-slate-400 dark:text-slate-500 truncate">
+                  {card.title}
+                </span>
 
-              <div
-                className={`h-12 w-12 rounded-2xl ${theme.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-xs`}
-              >
-                <Icon size={22} className="stroke-[2.2]" />
+                <div
+                  className={`h-9 w-9 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl ${theme.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-xs shrink-0`}
+                >
+                  <Icon
+                    size={18}
+                    className="sm:hidden stroke-[2.2]"
+                  />
+                  <Icon
+                    size={22}
+                    className="hidden sm:block stroke-[2.2]"
+                  />
+                </div>
+              </div>
+
+              {/* Main Value Highlight */}
+              <div className="mt-3 sm:mt-4">
+                <h3 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none truncate">
+                  {card.value}
+                </h3>
               </div>
             </div>
 
-            {/* Main Value Highlight */}
-            <div className="mt-4">
-              <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                {card.value}
-              </h3>
+            {/* Bottom Row: Status Pill */}
+            <div className="relative z-10 mt-4 sm:mt-6 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-slate-800/60">
+              <span
+                className={`inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[11px] font-extrabold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg border ${theme.pillBg}`}
+              >
+                {card.subtitle}
+              </span>
             </div>
           </div>
-
-          {/* Bottom Row: Status Pill */}
-          <div className="relative z-10 mt-6 pt-3 border-t border-slate-100 dark:border-slate-800/60">
-            <span
-              className={`inline-flex items-center gap-1.5 text-[11px] font-extrabold px-2.5 py-1 rounded-lg border ${theme.pillBg}`}
-            >
-              {card.subtitle}
-            </span>
-          </div>
-        </div>
-      );
-    })}
-  </div>
-);
-
+        );
+      })}
+    </div>
+  );
 }

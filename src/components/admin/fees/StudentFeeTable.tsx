@@ -154,7 +154,7 @@ export default function StudentFeeTable({
 
                 {/* Name & ID/Course */}
                 <div className="min-w-0">
-                  <p className="font-bold text-slate-900 dark:text-slate-100 text-xs truncate leading-tight">
+                  <p className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate leading-tight">
                     {studentName}
                   </p>
                   <p className="text-[10px] text-slate-400 font-medium truncate">

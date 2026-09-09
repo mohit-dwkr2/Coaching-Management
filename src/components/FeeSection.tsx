@@ -124,7 +124,13 @@ export default function FeeSection({
               </div>
               <div className="mt-3 pl-1">
                 <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight truncate">
-                  {data.nextDueDate || "Not Available"}
+                  {data.nextDueDate
+                    ? new Date(data.nextDueDate).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                    : "Not Available"}
                 </h3>
                 <div className="mt-2.5 flex items-center gap-1.5">
                   <span className="text-[10px] font-bold text-slate-400">Status:</span>
