@@ -1171,19 +1171,39 @@ const StudentFeeSection = ({
       return;
     }
 
+
     if (reportType === "complete") {
 
-      const rows = exportData.map(mapFee);
+      let rows = studentFees
+        .filter((fee) => {
+
+          if (!fee.created_at) return false;
+
+          const feeDate = fee.created_at.split("T")[0];
+
+          if (fromDate && feeDate < fromDate) {
+            return false;
+          }
+
+          if (toDate && feeDate > toDate) {
+            return false;
+          }
+
+          return true;
+        })
+        .map(mapFee);
 
       if (!rows.length) {
         toast.error("No records found.");
         return;
       }
+
       printTable(
         "Complete Fees Report",
         Object.keys(rows[0]),
         rows
       );
+
       return;
     }
 
@@ -1363,8 +1383,45 @@ const StudentFeeSection = ({
 
     if (reportType === "collection") {
 
-      let rows = collectionData
-        .map(mapTransaction);
+      // Course Filter
+      if (courseId && courseId !== "all") {
+        collectionData = collectionData.filter((transaction) => {
+          const fee = studentFees.find(
+            (f) => f.id === transaction.student_fee_id
+          );
+
+          return fee?.course_id === courseId;
+        });
+      }
+
+      // Batch Filter
+      if (batchId && batchId !== "all") {
+        collectionData = collectionData.filter((transaction) => {
+          const fee = studentFees.find(
+            (f) => f.id === transaction.student_fee_id
+          );
+
+          return fee?.student?.batch_id === batchId;
+        });
+      }
+
+      // From Date
+      if (fromDate) {
+        collectionData = collectionData.filter(
+          (transaction) =>
+            transaction.transaction_date >= fromDate
+        );
+      }
+
+      // To Date
+      if (toDate) {
+        collectionData = collectionData.filter(
+          (transaction) =>
+            transaction.transaction_date <= toDate
+        );
+      }
+
+      const rows = collectionData.map(mapTransaction);
 
       if (!rows.length) {
         toast.error("No records found.");
@@ -1383,8 +1440,59 @@ const StudentFeeSection = ({
 
     if (reportType === "history") {
 
-      let rows = historyData
-        .map(mapTransaction);
+      // Course Filter
+      if (courseId && courseId !== "all") {
+        historyData = historyData.filter((transaction) => {
+          const fee = studentFees.find(
+            (f) => f.id === transaction.student_fee_id
+          );
+
+          return fee?.course_id === courseId;
+        });
+      }
+
+      // Batch Filter
+      if (batchId && batchId !== "all") {
+        historyData = historyData.filter((transaction) => {
+          const fee = studentFees.find(
+            (f) => f.id === transaction.student_fee_id
+          );
+
+          return fee?.student?.batch_id === batchId;
+        });
+      }
+
+      // Student Filter
+      if (studentId && studentId !== "all") {
+        historyData = historyData.filter((transaction) => {
+          const fee = studentFees.find(
+            (f) => f.id === transaction.student_fee_id
+          );
+
+          return (
+            String(fee?.student?.id) ===
+            String(studentId)
+          );
+        });
+      }
+
+      // From Date
+      if (fromDate) {
+        historyData = historyData.filter(
+          (transaction) =>
+            transaction.transaction_date >= fromDate
+        );
+      }
+
+      // To Date
+      if (toDate) {
+        historyData = historyData.filter(
+          (transaction) =>
+            transaction.transaction_date <= toDate
+        );
+      }
+
+      const rows = historyData.map(mapTransaction);
 
       if (!rows.length) {
         toast.error("No payment history found.");
@@ -1399,6 +1507,7 @@ const StudentFeeSection = ({
 
       return;
     }
+
 
   };
 
