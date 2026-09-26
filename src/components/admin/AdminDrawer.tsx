@@ -318,7 +318,6 @@ const AdminDrawer: React.FC<AdminDrawerProps> = ({
                   </label>
 
                   <input
-                    disabled
                     type="email"
                     placeholder="admin@example.com"
                     value={inviteEmail}

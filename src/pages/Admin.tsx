@@ -218,7 +218,7 @@ export default function Admin() {
       } = await supabase.auth.getSession();
 
       const response = await fetch(
-        "https://pqsauuhrabzjsfpqcsqf.supabase.co/functions/v1/invite-admin",
+        "https://omobunntirxvscmwlbiq.supabase.co/functions/v1/invite-admin",
         {
           method: "POST",
           headers: {
@@ -270,7 +270,7 @@ export default function Admin() {
       } = await supabase.auth.getSession();
 
       const response = await fetch(
-        "https://pqsauuhrabzjsfpqcsqf.supabase.co/functions/v1/delete-admin",
+       "https://omobunntirxvscmwlbiq.supabase.co/functions/v1/delete-admin",
         {
           method: "POST",
           headers: {
