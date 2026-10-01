@@ -37,6 +37,7 @@ serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     const authHeader = req.headers.get("Authorization");
+
     if (!authHeader?.startsWith("Bearer ")) {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
@@ -53,8 +54,12 @@ serve(async (req) => {
     }
 
     const body = await req.json();
+
     const email =
-      typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+      typeof body.email === "string"
+        ? body.email.trim().toLowerCase()
+        : "";
+
     const role = body.role;
     const tenantId = body.tenantId;
 
@@ -70,24 +75,34 @@ serve(async (req) => {
       return jsonResponse({ error: "Invalid invite role" }, 400);
     }
 
-    // Confirm that the tenant exists and is active.
+    // Confirm that the tenant exists, is active,
+    // and has a domain configured.
     const { data: tenant, error: tenantError } = await supabaseAdmin
       .from("Coaching-3_Tenants")
-      .select("id, is_active")
+      .select("id, is_active, domain")
       .eq("id", tenantId)
       .maybeSingle();
 
-    if (tenantError || !tenant || !tenant.is_active) {
-      return jsonResponse({ error: "Tenant not found or inactive" }, 404);
+    if (
+      tenantError ||
+      !tenant ||
+      !tenant.is_active ||
+      !tenant.domain
+    ) {
+      return jsonResponse(
+        { error: "Tenant not found, inactive, or domain is missing" },
+        404
+      );
     }
 
     // Only an owner of THIS tenant may invite.
-    const { data: membership, error: membershipError } = await supabaseAdmin
-      .from("Coaching-3_TenantAdmins")
-      .select("role")
-      .eq("tenant_id", tenantId)
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const { data: membership, error: membershipError } =
+      await supabaseAdmin
+        .from("Coaching-3_TenantAdmins")
+        .select("role")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", user.id)
+        .maybeSingle();
 
     if (
       membershipError ||
@@ -101,32 +116,49 @@ serve(async (req) => {
     }
 
     // Check existing admin profile only within this tenant.
-    const { data: existingAdmin, error: existingError } = await supabaseAdmin
-      .from("Coaching-3_Admins")
-      .select("id")
-      .eq("tenant_id", tenantId)
-      .ilike("email", email)
-      .maybeSingle();
+    const { data: existingAdmin, error: existingError } =
+      await supabaseAdmin
+        .from("Coaching-3_Admins")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .ilike("email", email)
+        .maybeSingle();
 
     if (existingError) {
-      return jsonResponse({ error: "Could not check existing admin" }, 500);
+      return jsonResponse(
+        { error: "Could not check existing admin" },
+        500
+      );
     }
 
     if (existingAdmin) {
       return jsonResponse(
-        { error: "This email already has an admin profile in this coaching" },
+        {
+          error:
+            "This email already has an admin profile in this coaching",
+        },
         409
       );
     }
 
+    // Build the password setup URL dynamically from this tenant's domain.
+    const tenantDomain = tenant.domain
+      .replace(/^https?:\/\//, "")
+      .replace(/\/+$/, "");
+
+    const redirectTo = `https://${tenantDomain}/set-password`;
+
     const { data: inviteData, error: inviteError } =
       await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo:  "https://cbm-coaching-management.netlify.app/set-password",
+        redirectTo,
       });
 
     if (inviteError || !inviteData.user) {
       return jsonResponse(
-        { error: inviteError?.message || "Failed to invite user" },
+        {
+          error:
+            inviteError?.message || "Failed to invite user",
+        },
         400
       );
     }
@@ -146,19 +178,22 @@ serve(async (req) => {
 
     if (profileError) {
       return jsonResponse(
-        { error: `Invite sent, but admin profile could not be created: ${profileError.message}` },
+        {
+          error: `Invite sent, but admin profile could not be created: ${profileError.message}`,
+        },
         500
       );
     }
 
     // Add membership so the user is associated with this tenant.
-    const { error: membershipInsertError } = await supabaseAdmin
-      .from("Coaching-3_TenantAdmins")
-      .insert({
-        tenant_id: tenantId,
-        user_id: invitedUserId,
-        role,
-      });
+    const { error: membershipInsertError } =
+      await supabaseAdmin
+        .from("Coaching-3_TenantAdmins")
+        .insert({
+          tenant_id: tenantId,
+          user_id: invitedUserId,
+          role,
+        });
 
     if (membershipInsertError) {
       // Remove the profile created above to avoid a partial setup.
@@ -169,7 +204,9 @@ serve(async (req) => {
         .eq("user_id", invitedUserId);
 
       return jsonResponse(
-        { error: `Invite sent, but tenant membership could not be created: ${membershipInsertError.message}` },
+        {
+          error: `Invite sent, but tenant membership could not be created: ${membershipInsertError.message}`,
+        },
         500
       );
     }
@@ -179,7 +216,9 @@ serve(async (req) => {
     return jsonResponse(
       {
         error:
-          error instanceof Error ? error.message : "Unknown error",
+          error instanceof Error
+            ? error.message
+            : "Unknown error",
       },
       500
     );
