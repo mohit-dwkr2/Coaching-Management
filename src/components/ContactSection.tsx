@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,9 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Loader2 } from "lucide-react";
 import { supabase } from "@/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
-import React from "react";
+import { useTenant } from "@/contexts/TenantContext";
 
 export default function ContactSection() {
+    const { tenant } = useTenant();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,28 +24,52 @@ export default function ContactSection() {
   // Selected course details
   const [courseInfo, setCourseInfo] = useState("");
 
+ useEffect(() => {
+  if (!tenant?.id) {
+    setCourses([]);
+    return;
+  }
 
-  React.useEffect(() => {
-    const fetchCourses = async () => {
-      const { data, error } = await supabase
-        .from("Coaching-3_Courses")
-        .select("id, course_name")
-        .eq("status", "active")
-        .order("course_name", { ascending: true });
+  let cancelled = false;
 
-      if (error) {
-        console.error("Error fetching courses:", error);
-        return;
+  const fetchCourses = async () => {
+    const domain = window.location.hostname;
+
+    const { data, error } = await supabase.rpc(
+      "get_public_coaching_site",
+      {
+        p_domain: domain,
       }
+    );
 
-      setCourses(data || []);
-    };
-    fetchCourses();
-  }, []);
+    if (cancelled) return;
+
+    if (error) {
+      console.error("Error fetching courses:", error);
+      setCourses([]);
+      return;
+    }
+
+    setCourses(data?.courses ?? []);
+  };
+
+  fetchCourses();
+
+  return () => {
+    cancelled = true;
+  };
+}, [tenant?.id]);
 
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+        if (!tenant?.id) {
+      toast({
+        title: "Coaching could not be identified.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Validation: Name, Phone aur Email teeno check kar rahe hain
     if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) {
@@ -55,19 +80,21 @@ export default function ContactSection() {
     try {
       setIsSubmitting(true);
 
-      const { error } = await supabase
-        .from("Coaching-3_Contactform")
-        .insert([
-          {
-            name: form.name,
-            email: form.email, // Ab yahan asli email jayega
-            phone: form.phone,
-            // Course details ko hum message ke sath merge kar ke bhej rahe hain
-            message: `[COURSE: ${courseInfo}] | Message: ${form.message}`,
-          },
-        ]);
+      const domain = window.location.hostname;
+
+      const { data, error } = await supabase.rpc("submit_public_contact", {
+        p_domain: domain,
+        p_name: form.name.trim(),
+        p_email: form.email.trim(),
+        p_phone: form.phone.trim(),
+        p_message: `[COURSE: ${courseInfo}] | Message: ${form.message}`,
+      });
 
       if (error) throw error;
+
+      if (data !== true) {
+        throw new Error("This coaching website domain is not configured.");
+      }
 
       toast({
         title: "Inquiry Sent!",

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
+import { useTenant } from "@/contexts/TenantContext";
 import {
   GraduationCap,
   Lock,
@@ -9,6 +10,13 @@ import {
 } from "lucide-react";
 
 const SetPassword = () => {
+
+  const {
+    tenant,
+    loading: tenantLoading,
+    error: tenantError,
+  } = useTenant();
+
   const navigate = useNavigate();
 
   const [password, setPassword] = useState("");
@@ -24,12 +32,18 @@ const SetPassword = () => {
 
   // ✅ Check invite session
   useEffect(() => {
+    if (tenantLoading) return;
+
     const checkSession = async () => {
+      if (!tenant?.id || tenantError) {
+        navigate("/admin-login");
+        return;
+      }
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
-      // ❌ Invalid invite link
       if (!session) {
         navigate("/admin-login");
         return;
@@ -39,7 +53,8 @@ const SetPassword = () => {
     };
 
     checkSession();
-  }, [navigate]);
+  }, [navigate, tenant, tenantLoading, tenantError]);
+
 
   // ✅ Set Password
   const handleSetPassword = async (
@@ -71,6 +86,11 @@ const SetPassword = () => {
     }
 
     try {
+
+      if (tenantLoading || !tenant?.id || tenantError) {
+        setError(tenantError || "Coaching tenant could not be resolved.");
+        return;
+      }
       setLoading(true);
 
       // ✅ Update password
@@ -85,25 +105,25 @@ const SetPassword = () => {
         return;
       }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-
-      if (user) {
-        const { error: updateError } = await supabase
-          .from("Coaching-3_Admins")
-          .update({
-            status: "active",
-          })
-          .eq("user_id", user.id);
-
-        if (updateError) {
-          setError(updateError.message);
-          return;
+      const { data: activated, error: activateError } = await supabase.rpc(
+        "activate_invited_admin",
+        {
+          p_tenant_id: tenant.id,
         }
+      );
+
+      if (activateError) {
+        console.error("Admin activation error:", activateError);
+        setError(activateError.message);
+        setLoading(false);
+        return;
       }
 
+      if (!activated) {
+        setError("Unable to activate your admin account.");
+        setLoading(false);
+        return;
+      }
 
       setSuccess(
         "Password created successfully. Redirecting to login..."

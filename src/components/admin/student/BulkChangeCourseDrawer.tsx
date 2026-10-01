@@ -1,6 +1,7 @@
 import { BookOpen, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/supabaseClient";
 import { updateBatchStudentCount } from "@/utils/batchUtils";
 import {
@@ -25,42 +26,56 @@ export default function BulkChangeCourseDrawer({
 
 }: BulkChangeCourseDrawerProps) {
 
+    const { tenant } = useTenant();
     const academicYear = getCurrentAcademicYear();
 
     const [courses, setCourses] = useState<any[]>([]);
     const [selectedCourse, setSelectedCourse] = useState("");
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchCourses();
-            setSelectedCourse("");
+    const fetchCourses = useCallback(async () => {
+        if (!tenant?.id) {
+            setCourses([]);
+            setIsLoading(false);
+            return;
         }
-    }, [isOpen]);
 
+        setIsLoading(true);
 
-    const fetchCourses = async () => {
         try {
-            setIsLoading(true);
-
             const { data, error } = await supabase
                 .from("Coaching-3_Courses")
                 .select("*")
+                .eq("tenant_id", tenant.id)
                 .eq("status", "active")
                 .order("course_name");
 
             if (error) throw error;
 
             setCourses(data ?? []);
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err) {
+            console.error("Failed to load courses:", err);
+            setCourses([]);
+            toast.error("Failed to load courses.");
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [tenant?.id]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        setSelectedCourse("");
+        void fetchCourses();
+    }, [isOpen, fetchCourses]);
 
 
     const changeBulkCourse = async () => {
+        if (!tenant?.id) {
+            toast.error("Tenant information is missing.");
+            return;
+        }
+
         if (!students.length) {
             toast.error("No students selected.");
             return;
@@ -74,6 +89,15 @@ export default function BulkChangeCourseDrawer({
         const allSameCourse = students.every(
             (student) => student.course_id === selectedCourse
         );
+
+        const targetCourse = courses.find(
+            (course) => course.id === selectedCourse
+        );
+
+        if (!targetCourse) {
+            toast.error("Please select a valid course.");
+            return;
+        }
 
         if (allSameCourse) {
             toast.info("Selected students are already in this course.");
@@ -103,8 +127,8 @@ export default function BulkChangeCourseDrawer({
         status
       `)
                 .in("student_id", studentIds)
+                .eq("tenant_id", tenant.id)
                 .eq("academic_year", academicYear);
-
             if (feeError) {
                 throw feeError;
             }
@@ -123,11 +147,12 @@ export default function BulkChangeCourseDrawer({
                 .from("Coaching-3_AttendanceRecords")
                 .select(`
         student_id,
-        session:Coaching-3_AttendanceSessions!attendance_records_session_fk(
+        session:Coaching-3_AttendanceSessions!attendance_records_session_tenant_fk(
             attendance_date
         )
     `)
-                .in("student_id", studentIds);
+                .in("student_id", studentIds)
+                .eq("tenant_id", tenant.id);
 
             if (attendanceError) {
                 throw attendanceError;
@@ -218,7 +243,8 @@ export default function BulkChangeCourseDrawer({
                 const { error: deleteFeeError } = await supabase
                     .from("Coaching-3_StudentFees")
                     .delete()
-                    .eq("id", fee.id);
+                    .eq("id", fee.id)
+                    .eq("tenant_id", tenant.id);
 
                 if (deleteFeeError) {
                     throw deleteFeeError;
@@ -258,7 +284,8 @@ export default function BulkChangeCourseDrawer({
 
                         updated_at: new Date().toISOString(),
                     })
-                    .eq("id", student.id);
+                    .eq("id", student.id)
+                    .eq("tenant_id", tenant.id);
 
                 if (studentError) {
                     throw studentError;
@@ -273,7 +300,8 @@ export default function BulkChangeCourseDrawer({
                         course_id: selectedCourse,
                         updated_at: new Date().toISOString(),
                     })
-                    .eq("user_id", student.user_id);
+                    .eq("user_id", student.user_id)
+                    .eq("tenant_id", tenant.id);
 
                 if (approvalError) {
                     throw approvalError;
@@ -285,7 +313,7 @@ export default function BulkChangeCourseDrawer({
              * Update old batch counts.
              */
             for (const batchId of oldBatchIds) {
-                await updateBatchStudentCount(batchId);
+                await updateBatchStudentCount(batchId, tenant.id);
             }
 
             toast.success(
@@ -295,17 +323,14 @@ export default function BulkChangeCourseDrawer({
             onUpdated();
             onClose();
 
-        } catch (err: any) {
+        } catch (err) {
             console.error("BULK COURSE CHANGE ERROR:", err);
-
-            toast.error(
-                err?.message || "Failed to change course."
-            );
-
+            toast.error("Failed to change course.");
         } finally {
             setIsLoading(false);
         }
     };
+
 
     if (!isOpen) return null;
 

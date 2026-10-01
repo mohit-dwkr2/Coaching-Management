@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTenant } from "@/contexts/TenantContext";
 import {
     AlertCircle,
     CheckCircle2,
@@ -36,6 +37,7 @@ export default function ChangeFeeStructureDialog({
     feeStructures,
     onChanged,
 }: ChangeFeeStructureDialogProps) {
+    const { tenant } = useTenant();
 
     const [selectedStructureId, setSelectedStructureId] =
         useState("");
@@ -54,8 +56,12 @@ export default function ChangeFeeStructureDialog({
      */
 
     useEffect(() => {
-        if (!open || !studentFee) return;
-
+        if (!open || !studentFee || !tenant?.id) {
+            setAvailableStructures([]);
+            setLoadingStructures(false);
+            return;
+        }
+        let isActive = true;
         const loadFeeStructures = async () => {
             try {
                 setLoadingStructures(true);
@@ -64,12 +70,7 @@ export default function ChangeFeeStructureDialog({
                     studentFee.course_id ||
                     studentFee.fee_structure?.course_id;
 
-                console.log("========== CHANGE FEE STRUCTURE ==========");
-                console.log("Student:", studentFee);
-                console.log("Student Course ID:", courseId);
-
                 if (!courseId) {
-                    console.error("Course ID missing");
                     setAvailableStructures([]);
                     return;
                 }
@@ -77,37 +78,38 @@ export default function ChangeFeeStructureDialog({
                 const { data, error } = await supabase
                     .from("Coaching-3_FeeStructures")
                     .select("*")
+                    .eq("tenant_id", tenant.id)
                     .eq("course_id", courseId)
                     .eq("status", "active")
                     .order("created_at", {
                         ascending: false,
                     });
 
-                console.log("Fee Structures:", data);
-                console.log("Fee Structures Error:", error);
-
                 if (error) throw error;
 
-                setAvailableStructures(data || []);
+                if (isActive) {
+                    setAvailableStructures(data ?? []);
+                }
             } catch (error: any) {
-                console.error(
-                    "Failed to load fee structures:",
-                    error
-                );
+                console.error("Failed to load fee structures:", error);
 
-                toast.error(
-                    error?.message ||
-                    "Failed to load fee structures."
-                );
-
-                setAvailableStructures([]);
+                if (isActive) {
+                    setAvailableStructures([]);
+                    toast.error(
+                        error?.message || "Failed to load fee structures."
+                    );
+                }
             } finally {
-                setLoadingStructures(false);
+                if (isActive) {
+                    setLoadingStructures(false);
+                }
             }
         };
-
         loadFeeStructures();
-    }, [open, studentFee]);
+        return () => {
+            isActive = false;
+        };
+    }, [open, studentFee, tenant?.id]);
 
 
 

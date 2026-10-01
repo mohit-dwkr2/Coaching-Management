@@ -15,7 +15,7 @@ import {
   Bell
 } from "lucide-react";
 import { toast } from "sonner"
-
+import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/supabaseClient";
 // import BatchManager from "@/components/admin/BatchManager";
 import GalleryManager from "@/components/admin/GalleryManager";
@@ -86,6 +86,7 @@ const panels: Record<Tab, React.FC> = {
 
 export default function Admin() {
 
+
   const [active, setActive] = useState<Tab>("students");
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -96,7 +97,7 @@ export default function Admin() {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [currentAdmin, setCurrentAdmin] =
     useState<AdminUser | null>(null);
-
+  const { tenant, loading: tenantLoading, error: tenantError } = useTenant();
   const navigate = useNavigate();
 
   const visibleManagementTabs =
@@ -133,10 +134,11 @@ export default function Admin() {
 
 
   // ✅ Fetch All Admins
-  const fetchAdmins = async () => {
+  const fetchAdmins = async (tenantId: string) => {
     const { data, error } = await supabase
       .from("Coaching-3_Admins")
       .select("*")
+      .eq("tenant_id", tenantId)
       .order("created_at");
 
     if (error) {
@@ -145,65 +147,97 @@ export default function Admin() {
       return;
     }
 
-
-
     setAdmins(data ?? []);
-
   };
+
 
   // 🔐 Protect Admin Route
   useEffect(() => {
+    if (tenantLoading) return;
+
+    if (!tenant?.id) {
+      setLoading(false);
+      toast.error(tenantError || "Coaching tenant not found");
+      navigate("/admin-login");
+      return;
+    }
+
+    let cancelled = false;
+
     const checkUser = async () => {
+      setLoading(true);
+
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser();
 
-      if (!user) {
+      if (cancelled) return;
+
+      if (userError || !user) {
         navigate("/admin-login");
+        setLoading(false);
         return;
       }
 
-      // ✅ Verify admin
-      const { data: adminData, error } = await supabase
-        .from("Coaching-3_Admins")
-        .select("*")
+      // Check that this user belongs to the current tenant
+      const { data: membership, error: membershipError } = await supabase
+        .from("Coaching-3_TenantAdmins")
+        .select("role")
+        .eq("tenant_id", tenant.id)
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error || !adminData) {
+      if (cancelled) return;
+
+      if (membershipError || !membership) {
         await supabase.auth.signOut();
         navigate("/admin-login");
+        setLoading(false);
         return;
       }
 
-      // ❌ Inactive admin
-      if (adminData.status !== "active") {
+      // Load this tenant's admin profile
+      const { data: adminData, error: adminError } = await supabase
+        .from("Coaching-3_Admins")
+        .select("*")
+        .eq("tenant_id", tenant.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (adminError || !adminData || adminData.status !== "active") {
         await supabase.auth.signOut();
         navigate("/admin-login");
+        setLoading(false);
         return;
       }
 
-      setCurrentAdmin(adminData);
+      const verifiedAdmin = {
+        ...adminData,
+        role: membership.role as AdminRole,
+      };
 
-      if (adminData.role === "teacher") {
-        setActive("attendance");
-      } else {
-        setActive("students");
+      setCurrentAdmin(verifiedAdmin);
+
+      setActive(
+        verifiedAdmin.role === "teacher" ? "attendance" : "students"
+      );
+
+      await fetchAdmins(tenant.id);
+
+      if (!cancelled) {
+        setLoading(false);
       }
-
-      await fetchAdmins();
-
-      setLoading(false);
     };
 
     checkUser();
-  }, [navigate]);
 
-  // 🔓 Logout
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/admin-login");
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantLoading, tenant?.id, tenantError, navigate]);
 
 
   // ✅ Invite Admin
@@ -211,6 +245,11 @@ export default function Admin() {
     email: string,
     role: AdminRole
   ) => {
+    if (!tenant?.id) {
+      toast.error("Coaching tenant is not loaded");
+      return;
+    }
+
     try {
 
       const {
@@ -228,6 +267,7 @@ export default function Admin() {
           body: JSON.stringify({
             email,
             role,
+            tenantId: tenant.id,
           }),
         }
       );
@@ -239,7 +279,7 @@ export default function Admin() {
         return;
       }
 
-      await fetchAdmins();
+      await fetchAdmins(tenant.id);
 
       toast.success("Invite sent successfully");
 
@@ -251,6 +291,10 @@ export default function Admin() {
 
   // ✅ Delete Admin
   const handleDelete = async (id: string) => {
+    if (!tenant?.id) {
+      toast.error("Coaching tenant is not loaded");
+      return;
+    }
     try {
 
       const adminToDelete = admins.find(
@@ -270,7 +314,7 @@ export default function Admin() {
       } = await supabase.auth.getSession();
 
       const response = await fetch(
-       "https://omobunntirxvscmwlbiq.supabase.co/functions/v1/delete-admin",
+        "https://omobunntirxvscmwlbiq.supabase.co/functions/v1/delete-admin",
         {
           method: "POST",
           headers: {
@@ -279,6 +323,7 @@ export default function Admin() {
           },
           body: JSON.stringify({
             adminId: id,
+            tenantId: tenant.id,
           }),
         }
       );
@@ -293,7 +338,7 @@ export default function Admin() {
         return;
       }
 
-      await fetchAdmins();
+      await fetchAdmins(tenant.id);
 
       toast.success("Admin deleted successfully");
 
@@ -306,7 +351,7 @@ export default function Admin() {
 
 
 
-  if (loading) {
+  if (tenantLoading || loading) {
     return (
       <div className="h-screen flex items-center justify-center text-slate-500 font-semibold">
         Checking Authentication...
@@ -318,6 +363,18 @@ export default function Admin() {
     setActive(id);
     setIsSidebarOpen(false);
   };
+
+  const handleLogout = async () => {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    console.error("Logout failed:", error.message);
+    return;
+  }
+
+  setCurrentAdmin(null);
+  navigate("/admin-login", { replace: true });
+};
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-slate-900 overflow-hidden">

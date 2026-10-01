@@ -1,5 +1,8 @@
 import { supabase } from "@/supabaseClient";
-import { getCurrentAcademicYear, getAcademicYearFromDate } from "@/utils/academicYear";
+import {
+    getCurrentAcademicYear,
+    getAcademicYearFromDate,
+} from "@/utils/academicYear";
 
 export interface DashboardData {
 
@@ -41,27 +44,20 @@ export interface DashboardData {
     };
 
     notes: {
-
         total: number;
-
     };
 
     notifications: {
-
         total: number;
-
     };
-
 }
 
 export async function getStudentDashboardData(
-    studentId: number
+    studentId: number,
+    tenantId: string
 ): Promise<DashboardData> {
 
-
-
     const currentAcademicYear = getCurrentAcademicYear();
-
 
     // ========================================
     // CURRENT YEAR FEE
@@ -74,13 +70,13 @@ export async function getStudentDashboardData(
         .from("Coaching-3_StudentFees")
         .select("*")
         .eq("student_id", studentId)
+        .eq("tenant_id", tenantId)
         .eq("academic_year", currentAcademicYear)
         .maybeSingle();
 
     if (feeError) {
         console.error("Current fee fetch error:", feeError);
     }
-
 
     // ========================================
     // PREVIOUS YEAR DUES
@@ -92,11 +88,12 @@ export async function getStudentDashboardData(
     } = await supabase
         .from("Coaching-3_StudentFees")
         .select(`
-        id,
-        academic_year,
-        remaining_amount
-    `)
+            id,
+            academic_year,
+            remaining_amount
+        `)
         .eq("student_id", studentId)
+        .eq("tenant_id", tenantId)
         .neq("academic_year", currentAcademicYear)
         .gt("remaining_amount", 0)
         .order("academic_year", {
@@ -121,8 +118,9 @@ export async function getStudentDashboardData(
         0
     );
 
-
-
+    // ========================================
+    // ATTENDANCE
+    // ========================================
 
     const {
         data: attendance,
@@ -131,14 +129,19 @@ export async function getStudentDashboardData(
         .from("Coaching-3_AttendanceRecords")
         .select(`
         status,
-        session:Coaching-3_AttendanceSessions!attendance_records_session_fk(
+        session:Coaching-3_AttendanceSessions!attendance_records_session_tenant_fk(
             attendance_date
         )
     `)
-        .eq("student_id", studentId);
+        .eq("student_id", studentId)
+        .eq("tenant_id", tenantId);
 
-
-
+    if (attendanceError) {
+        console.error(
+            "Attendance fetch error:",
+            attendanceError
+        );
+    }
 
     const currentAttendance =
         attendance?.filter((item: any) => {
@@ -153,7 +156,6 @@ export async function getStudentDashboardData(
             );
         }) || [];
 
-
     const previousAttendance =
         attendance?.filter((item: any) => {
             const attendanceDate =
@@ -166,7 +168,6 @@ export async function getStudentDashboardData(
                 currentAcademicYear
             );
         }) || [];
-
 
     const historyMap: Record<
         string,
@@ -229,7 +230,6 @@ export async function getStudentDashboardData(
             b.academicYear.localeCompare(a.academicYear)
         );
 
-
     const today = new Date().toISOString().split("T")[0];
 
     const todayAttendance = currentAttendance.find(
@@ -239,7 +239,6 @@ export async function getStudentDashboardData(
 
     const todayStatus =
         todayAttendance?.status || "Not Marked";
-
 
     const present =
         currentAttendance.filter(
@@ -263,7 +262,6 @@ export async function getStudentDashboardData(
         total === 0
             ? 0
             : Math.round((present / total) * 100);
-
 
     return {
         attendance: {
@@ -297,11 +295,9 @@ export async function getStudentDashboardData(
             previousDueTotal,
         },
 
-
         notes: {
             total: 0,
         },
-
 
         notifications: {
             total: 0,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { toast } from "sonner";
 
@@ -13,7 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import { AlertCircle, CheckCircle2, Receipt, X } from "lucide-react";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface AssignFeeDrawerProps {
   isOpen: boolean;
@@ -21,7 +23,6 @@ interface AssignFeeDrawerProps {
   student: any;
   onAssigned: () => void;
 }
-
 
 function getCurrentAcademicYear(): string {
   const today = new Date();
@@ -36,32 +37,58 @@ function getCurrentAcademicYear(): string {
   return `${year - 1}-${String(year).slice(-2)}`;
 }
 
-
 export default function AssignFeeDrawer({
   isOpen,
   onClose,
   student,
   onAssigned,
 }: AssignFeeDrawerProps) {
+  const { tenant, loading: tenantLoading } = useTenant();
+
   const [loading, setLoading] = useState(false);
   const [feeStructures, setFeeStructures] = useState<any[]>([]);
   const [selectedStructure, setSelectedStructure] = useState("");
   const [discount, setDiscount] = useState(0);
-
   const [assignedFee, setAssignedFee] = useState<any | null>(null);
 
+  // Helps ignore responses from an older student/tenant request.
+  const requestIdRef = useRef(0);
+
   useEffect(() => {
+    const requestId = ++requestIdRef.current;
 
-    if (!isOpen) return;
+    // Reset drawer form/data on close, reopen, student change, or tenant change.
+    setSelectedStructure("");
+    setDiscount(0);
+    setFeeStructures([]);
+    setAssignedFee(null);
+    setLoading(false);
 
-    loadAssignedFee();
-    fetchFeeStructures();
+    if (!isOpen || tenantLoading || !tenant?.id || !student?.id) {
+      return () => {
+        requestIdRef.current++;
+      };
+    }
 
-  }, [isOpen, student]);
+    void fetchFeeStructures(requestId);
+    void loadAssignedFee(requestId);
 
-  const fetchFeeStructures = async () => {
+    return () => {
+      requestIdRef.current++;
+    };
+  }, [
+    isOpen,
+    student?.id,
+    student?.course_id,
+    tenant?.id,
+    tenantLoading,
+  ]);
 
-    if (!student?.course_id) return;
+  const fetchFeeStructures = async (requestId: number) => {
+    if (tenantLoading || !tenant?.id || !student?.course_id) {
+      setFeeStructures([]);
+      return;
+    }
 
     setLoading(true);
 
@@ -69,7 +96,11 @@ export default function AssignFeeDrawer({
       .from("Coaching-3_FeeStructures")
       .select("*")
       .eq("course_id", student.course_id)
+      .eq("tenant_id", tenant.id)
       .eq("status", "active");
+
+    // Ignore results if the drawer context changed while the request was running.
+    if (requestIdRef.current !== requestId) return;
 
     setLoading(false);
 
@@ -79,17 +110,11 @@ export default function AssignFeeDrawer({
     }
 
     setFeeStructures(data || []);
-    console.log("Fee Structures :", data);
-    console.log("Error :", error);
   };
 
   const selectedFee = useMemo(() => {
-    return feeStructures.find(
-      (item) => item.id === selectedStructure
-
-    );
+    return feeStructures.find((item) => item.id === selectedStructure);
   }, [feeStructures, selectedStructure]);
-
 
   const grandTotal = selectedFee
     ? Number(selectedFee.total_fee) +
@@ -99,66 +124,79 @@ export default function AssignFeeDrawer({
 
   const finalFee = Math.max(grandTotal - discount, 0);
 
-
-  const loadAssignedFee = async () => {
-    if (!student?.id) {
+  const loadAssignedFee = async (requestId?: number) => {
+    if (tenantLoading || !tenant?.id || !student?.id) {
       setAssignedFee(null);
       return;
     }
+
     const { data, error } = await supabase
       .from("Coaching-3_StudentFees")
       .select(`
-    *,
-    fee_structure:fee_structure_id(
-        id,
-        total_fee,
-        admission_fee,
-        registration_fee,
-        duration_months
-    ),
-    course:course_id(
-  course_name
-),
-
-batch:batch_id(
-  id,
-  batch_name,
-  course_id
-)
+  *,
+  fee_structure:Coaching-3_FeeStructures!student_fees_structure_tenant_fk(
+    id,
+    total_fee,
+    admission_fee,
+    registration_fee,
+    duration_months
+  ),
+  course:Coaching-3_Courses!student_fees_course_tenant_fk(
+    course_name
+  ),
+  batch:Coaching-3_StudentBatches!student_fees_batch_tenant_fk(
+    id,
+    batch_name,
+    course_id
+  )
 `)
       .eq("student_id", student.id)
       .eq("academic_year", getCurrentAcademicYear())
+      .eq("tenant_id", tenant.id)
       .maybeSingle();
+
+    if (
+      requestId !== undefined &&
+      requestIdRef.current !== requestId
+    ) {
+      return;
+    }
+
     if (error) {
       toast.error(error.message);
       return;
     }
+
     setAssignedFee(data);
   };
 
-
   const handleAssignFee = async () => {
-
-    if (!selectedFee) {
-      toast.error("Invalid fee structure.");
+    if (tenantLoading || !tenant?.id || !student?.id) {
+      toast.error("Tenant or student not found. Please try again.");
       return;
     }
 
-    if (!selectedStructure) {
-      toast.error("Please select a fee structure.");
+    if (!selectedStructure || !selectedFee) {
+      toast.error("Please select a valid fee structure.");
       return;
     }
 
     try {
       const academicYear = getCurrentAcademicYear();
-      // Check if fee already assigned
 
-      const { data: existingFee } = await supabase
+      // Check whether a fee is already assigned for this student/year/tenant.
+      const {
+        data: existingFee,
+        error: existingFeeError,
+      } = await supabase
         .from("Coaching-3_StudentFees")
         .select("id")
         .eq("student_id", student.id)
         .eq("academic_year", academicYear)
+        .eq("tenant_id", tenant.id)
         .maybeSingle();
+
+      if (existingFeeError) throw existingFeeError;
 
       if (existingFee) {
         toast.error(
@@ -170,6 +208,7 @@ batch:batch_id(
       const { error } = await supabase
         .from("Coaching-3_StudentFees")
         .insert({
+          tenant_id: tenant.id,
           student_id: student.id,
           course_id: student.course_id,
           batch_id: student.batch_id,
@@ -188,7 +227,7 @@ batch:batch_id(
           final_fee: finalFee,
           paid_amount: 0,
           remaining_amount: finalFee,
-          status: "Pending"
+          status: "Pending",
         });
 
       if (error) throw error;
@@ -196,19 +235,14 @@ batch:batch_id(
       toast.success("Fee assigned successfully.");
 
       await loadAssignedFee();
-
       onAssigned();
-
     } catch (err: any) {
-
-      toast.error(err.message);
-
+      toast.error(err?.message || "Failed to assign fee.");
     }
-
   };
 
-
   if (!isOpen) return null;
+
 
   return (
     <>
@@ -459,7 +493,7 @@ batch:batch_id(
                   <div className="flex justify-between text-xs text-slate-400 pt-1">
                     <span>Assigned On</span>
                     <span className="font-medium">
-                     {new Date(assignedFee.created_at).toLocaleDateString("en-GB")}
+                      {new Date(assignedFee.created_at).toLocaleDateString("en-GB")}
                     </span>
                   </div>
                 </div>

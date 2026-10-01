@@ -2,9 +2,16 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import { GraduationCap, Loader2 } from "lucide-react";
+import { useTenant } from "@/contexts/TenantContext";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+
+  const {
+    tenant,
+    loading: tenantLoading,
+    error: tenantError,
+  } = useTenant();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,40 +23,63 @@ export default function AdminLogin() {
 
   // ✅ Check Existing Session
   useEffect(() => {
+    if (tenantLoading) return;
+
+    let cancelled = false;
+
     const checkAdminSession = async () => {
+      if (!tenant || tenantError) {
+        setError(tenantError || "Coaching tenant could not be resolved.");
+        setCheckingSession(false);
+        return;
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
+      if (cancelled) return;
 
       if (!user) {
         setCheckingSession(false);
         return;
       }
 
-      // ✅ Verify admin access
-      const { data: adminData } = await supabase
+      const { data: adminData, error: adminError } = await supabase
         .from("Coaching-3_Admins")
-        .select("id")
+        .select("id, status")
         .eq("user_id", user.id)
+        .eq("tenant_id", tenant.id)
         .maybeSingle();
 
-      if (adminData) {
-        navigate("/admin");
-      } else {
+      if (cancelled) return;
+
+      if (adminError || !adminData || adminData.status !== "active") {
         await supabase.auth.signOut();
+      } else {
+        navigate("/admin");
       }
 
       setCheckingSession(false);
     };
 
     checkAdminSession();
-  }, [navigate]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, tenant, tenantLoading, tenantError]);
 
   // ✅ Login Handler
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (loading) return;
+
+    if (tenantLoading || !tenant || tenantError) {
+      setError(tenantError || "Coaching tenant is still loading.");
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -68,12 +98,12 @@ export default function AdminLogin() {
     }
 
     // ✅ Verify admin exists
-    const { data: adminData, error: adminError } =
-      await supabase
-        .from("Coaching-3_Admins")
-        .select("*")
-        .eq("user_id", data.user.id)
-        .maybeSingle();
+    const { data: adminData, error: adminError } = await supabase
+      .from("Coaching-3_Admins")
+      .select("id, status")
+      .eq("user_id", data.user.id)
+      .eq("tenant_id", tenant.id)
+      .maybeSingle();
 
     // ❌ Not an admin
     if (adminError || !adminData) {

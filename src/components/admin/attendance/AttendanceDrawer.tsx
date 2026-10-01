@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/supabaseClient";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
 
 import {
     X,
@@ -44,6 +45,7 @@ interface AttendanceRecord {
 
 export default function AttendanceDrawer({
 
+
     isOpen,
     onClose,
     selectedCourse,
@@ -52,7 +54,7 @@ export default function AttendanceDrawer({
     onAttendanceSaved,
 
 }: AttendanceDrawerProps) {
-
+    const { tenant, loading: tenantLoading } = useTenant();
 
     const [students, setStudents] =
         useState<AttendanceStudent[]>([]);
@@ -87,12 +89,13 @@ export default function AttendanceDrawer({
 
     const fetchCourse = async () => {
 
-        if (!selectedCourse) return;
+        if (!tenant?.id || !selectedCourse) return;
 
         const { data, error } = await supabase
             .from("Coaching-3_Courses")
             .select("course_name")
             .eq("id", selectedCourse)
+            .eq("tenant_id", tenant.id)
             .single();
 
         if (error) {
@@ -105,12 +108,13 @@ export default function AttendanceDrawer({
 
     const fetchBatch = async () => {
 
-        if (!selectedBatch) return;
+        if (!tenant?.id || !selectedBatch) return;
 
         const { data, error } = await supabase
             .from("Coaching-3_StudentBatches")
             .select("batch_name")
             .eq("id", selectedBatch)
+            .eq("tenant_id", tenant.id)
             .single();
 
         if (error) {
@@ -124,7 +128,7 @@ export default function AttendanceDrawer({
 
 
     const fetchStudents = async () => {
-        if (!selectedBatch) return;
+        if (!tenant?.id || !selectedBatch) return;
 
         try {
             setLoading(true);
@@ -153,6 +157,7 @@ export default function AttendanceDrawer({
                 roll_number
             `)
                 .eq("batch_id", selectedBatch)
+                .eq("tenant_id", tenant.id)
                 .eq("status", "active")
                 .order("roll_number", {
                     ascending: true,
@@ -181,7 +186,7 @@ export default function AttendanceDrawer({
 
 
     const loadAttendanceRecords = async () => {
-        if (!sessionId) return;
+        if (!tenant?.id || !sessionId) return;
 
         try {
             const { data: records, error } = await supabase
@@ -190,13 +195,14 @@ export default function AttendanceDrawer({
                 student_id,
                 status,
                 remarks,
-                student:student_id(
+               student:Coaching-3_Students!attendance_records_student_tenant_fk(
                     id,
                     name,
                     roll_number
                 )
             `)
-                .eq("session_id", sessionId);
+                .eq("session_id", sessionId)
+                .eq("tenant_id", tenant.id);
 
             if (error) throw error;
 
@@ -219,12 +225,13 @@ export default function AttendanceDrawer({
 
 
     const checkAttendanceSession = async () => {
-        if (!selectedBatch || !selectedDate) return;
+        if (!tenant?.id || !selectedBatch || !selectedDate) return;
         const { data, error } = await supabase
             .from("Coaching-3_AttendanceSessions")
             .select("id, is_locked")
             .eq("batch_id", selectedBatch)
             .eq("attendance_date", selectedDate)
+            .eq("tenant_id", tenant.id)
             .maybeSingle();
 
         if (error) {
@@ -234,7 +241,6 @@ export default function AttendanceDrawer({
         if (!data) {
             setSessionId(null);
             setSessionLocked(false);
-            await fetchStudents();
             return;
         }
         setSessionId(data.id);
@@ -244,12 +250,33 @@ export default function AttendanceDrawer({
 
 
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen || tenantLoading) return;
+
+        if (!tenant?.id) {
+            setStudents([]);
+            setCourseName("");
+            setBatchName("");
+            setSessionId(null);
+            setSessionLocked(false);
+            setHasChanges(false);
+            setLoading(false);
+            return;
+        }
+
+        setStudents([]);
+        setCourseName("");
+        setBatchName("");
+        setSessionId(null);
+        setSessionLocked(false);
+        setHasChanges(false);
+
         fetchCourse();
         fetchBatch();
         checkAttendanceSession();
     }, [
         isOpen,
+        tenant?.id,
+        tenantLoading,
         selectedCourse,
         selectedBatch,
         selectedDate,
@@ -257,16 +284,17 @@ export default function AttendanceDrawer({
 
 
     useEffect(() => {
-
-        if (!isOpen || !selectedBatch) return;
-
+        if (!isOpen || tenantLoading || !tenant?.id || !selectedBatch) return;
         fetchStudents();
-
     }, [
-        sessionId,
         isOpen,
+        tenant?.id,
+        tenantLoading,
         selectedBatch,
+        selectedDate,
+        sessionId,
     ]);
+
 
     useEffect(() => {
 
@@ -308,6 +336,10 @@ export default function AttendanceDrawer({
 
 
     const saveAttendance = async () => {
+        if (!tenant?.id) {
+            toast.error("Tenant not found. Please try again.");
+            return;
+        }
 
         if (sessionLocked) {
             toast.error("Attendance is locked.");
@@ -345,6 +377,7 @@ export default function AttendanceDrawer({
                 const { data, error } = await supabase
                     .from("Coaching-3_AttendanceSessions")
                     .insert({
+                        tenant_id: tenant.id,
                         course_id: selectedCourse,
                         batch_id: selectedBatch,
                         attendance_date: selectedDate,
@@ -367,19 +400,13 @@ export default function AttendanceDrawer({
             // =========================
 
             const attendanceRecords = students.map(student => ({
-
+                tenant_id: tenant.id,
                 session_id: currentSessionId,
-
                 student_id: student.id,
-
                 roll_number: student.roll_number,
-
                 status: student.attendanceStatus,
-
                 remarks: student.remarks || null,
-
                 updated_at: new Date().toISOString(),
-
             }));
 
 
@@ -429,7 +456,8 @@ export default function AttendanceDrawer({
                     updated_at: new Date().toISOString(),
 
                 })
-                .eq("id", currentSessionId);
+                .eq("id", currentSessionId)
+                .eq("tenant_id", tenant.id);
 
             if (sessionError) throw sessionError;
 

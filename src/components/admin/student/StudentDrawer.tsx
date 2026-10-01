@@ -23,6 +23,8 @@ import {
     ChevronRight,
 } from "lucide-react";
 
+import { useTenant } from "@/contexts/TenantContext";
+
 interface StudentDrawerProps {
     student: any;
     isOpen: boolean;
@@ -46,6 +48,7 @@ export default function StudentDrawer({
     handleComingSoon,
     onBatchAssigned,
 }: StudentDrawerProps) {
+    const { tenant } = useTenant();
 
     const [isBatchDrawerOpen, setIsBatchDrawerOpen] = useState(false);
     const [isAssignFeeDrawerOpen, setIsAssignFeeDrawerOpen] = useState(false);
@@ -60,33 +63,41 @@ export default function StudentDrawer({
     const [editEmail, setEditEmail] = useState("");
 
     useEffect(() => {
-        if (isOpen && student) {
-            setIsEditMode(false);
+        if (!isOpen || !student || !tenant?.id) return;
 
-            setSelectedCourse(student.course_id || "");
+        setIsEditMode(false);
+        setSelectedCourse(student.course_id || "");
+        setEditName(student.name || "");
+        setEditMobile(student.mobile || "");
+        setEditEmail(student.email || "");
 
-            fetchCourses();
-
-            setEditName(student.name || "");
-            setEditMobile(student.mobile || "");
-            setEditEmail(student.email || "");
-        }
-    }, [isOpen, student]);
+        fetchCourses();
+    }, [isOpen, student, tenant?.id]);
 
 
     const fetchCourses = async () => {
-        const { data } = await supabase
+        if (!tenant?.id) return;
+
+        const { data, error } = await supabase
             .from("Coaching-3_Courses")
-            .select("*")
+            .select("id, course_name")
+            .eq("tenant_id", tenant.id)
             .eq("status", "active")
             .order("course_name");
-        if (data) {
-            setCourses(data);
+
+        if (error) {
+            toast.error("Unable to load courses.");
+            return;
         }
+        setCourses(data || []);
     };
 
 
     const saveStudentChanges = async () => {
+        if (!tenant?.id) {
+            toast.error("Coaching tenant is not loaded.");
+            return;
+        }
 
         // ============================
         // VALIDATION
@@ -140,11 +151,12 @@ export default function StudentDrawer({
                 } = await supabase
                     .from("Coaching-3_AttendanceRecords")
                     .select(`
-            session:Coaching-3_AttendanceSessions!attendance_records_session_fk(
+            session:Coaching-3_AttendanceSessions!attendance_records_session_tenant_fk(
                 attendance_date
             )
         `)
-                    .eq("student_id", student.id);
+                    .eq("student_id", student.id)
+                    .eq("tenant_id", tenant.id);
 
                 if (attendanceError) {
                     console.error(
@@ -194,6 +206,7 @@ export default function StudentDrawer({
         `)
                     .eq("student_id", student.id)
                     .eq("academic_year", academicYear)
+                    .eq("tenant_id", tenant.id)
                     .maybeSingle();
 
                 if (feeError) {
@@ -234,7 +247,8 @@ export default function StudentDrawer({
                     const { error: deleteFeeError } = await supabase
                         .from("Coaching-3_StudentFees")
                         .delete()
-                        .eq("id", currentYearFee.id);
+                        .eq("id", currentYearFee.id)
+                        .eq("tenant_id", tenant.id);
 
                     if (deleteFeeError) {
                         console.error(
@@ -273,7 +287,8 @@ export default function StudentDrawer({
             const { error: studentError } = await supabase
                 .from("Coaching-3_Students")
                 .update(updateData)
-                .eq("id", student.id);
+                .eq("id", student.id)
+                .eq("tenant_id", tenant.id);
 
             if (studentError) {
                 throw studentError;
@@ -292,7 +307,8 @@ export default function StudentDrawer({
                     course_id: selectedCourse,
                     updated_at: new Date().toISOString(),
                 })
-                .eq("user_id", student.user_id);
+                .eq("user_id", student.user_id)
+                .eq("tenant_id", tenant.id);
 
             if (approvalError) {
                 throw approvalError;
@@ -303,7 +319,7 @@ export default function StudentDrawer({
             // ============================
 
             if (student.batch_id) {
-                await updateBatchStudentCount(student.batch_id);
+                await updateBatchStudentCount(student.batch_id, tenant.id);
             }
 
             await onBatchAssigned();

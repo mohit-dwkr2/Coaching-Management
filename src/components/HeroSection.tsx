@@ -3,6 +3,7 @@ import { ArrowRight, Sparkles, Users, Award, ShieldCheck, PlayCircle } from "luc
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
+import { useTenant } from "@/contexts/TenantContext";
 
 const stats = [
   {
@@ -23,23 +24,37 @@ const stats = [
 ];
 
 export default function HeroSection() {
-  // ✅ Fetch + Cache (1 hour)
-  const { data } = useQuery({
-    queryKey: ["hero"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("Coaching-3_Hero")
-        .select("heading, subheading, highlight_word, image_url")
-        .limit(1);
+  const { tenant } = useTenant();
 
-      if (error) throw error;
-      return data?.[0] || null;
+  const { data } = useQuery({
+    queryKey: ["hero", tenant?.id],
+
+    queryFn: async () => {
+      if (!tenant?.id) return null;
+
+      const { data, error } = await supabase.rpc(
+        "get_public_coaching_site",
+        {
+          p_domain: window.location.hostname,
+        }
+      );
+
+      if (error) {
+        console.error("Error fetching hero:", error);
+        throw error;
+      }
+
+      return data?.hero?.[0] ?? null;
     },
-    staleTime: 1000 * 60 * 60, // 1 hour
+
+    enabled: !!tenant?.id,
+    staleTime: 0,
     gcTime: 1000 * 60 * 60 * 2,
+    refetchOnMount: "always",
   });
 
   const heroData = data;
+
 
   // ✅ Dynamic heading from Supabase
   const renderHeading = () => {

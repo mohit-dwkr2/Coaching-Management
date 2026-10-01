@@ -1,202 +1,187 @@
 import { serve } from "std/http/server";
-
 import { createClient } from "@supabase/supabase-js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    // ✅ Handle CORS
-    if (req.method === "OPTIONS") {
-      return new Response("ok", {
-        headers: corsHeaders,
-      });
+    if (!supabaseUrl || !serviceRoleKey) {
+      return jsonResponse({ error: "Server configuration error" }, 500);
     }
 
-    // ✅ Create Supabase Admin Client
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // ✅ Get logged-in user token
     const authHeader = req.headers.get("Authorization");
-
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({
-          error: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: corsHeaders,
-        }
-      );
+    if (!authHeader?.startsWith("Bearer ")) {
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.slice("Bearer ".length);
 
-    // ✅ Verify logged-in user
     const {
       data: { user },
       error: userError,
     } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
-      return new Response(
-        JSON.stringify({
-          error: "Invalid user",
-        }),
-        {
-          status: 401,
-          headers: corsHeaders,
-        }
+      return jsonResponse({ error: "Invalid user" }, 401);
+    }
+
+    const body = await req.json();
+    const email =
+      typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const role = body.role;
+    const tenantId = body.tenantId;
+
+    if (!email || !tenantId || !role) {
+      return jsonResponse(
+        { error: "Email, role and tenantId are required" },
+        400
       );
     }
 
-    // ✅ Verify owner
-    const { data: ownerData } =
-      await supabaseAdmin
-        .from("Coaching-3_Admins")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("role", "owner")
-        .maybeSingle();
+    // This function may invite admins or teachers, never another owner.
+    if (role !== "admin" && role !== "teacher") {
+      return jsonResponse({ error: "Invalid invite role" }, 400);
+    }
 
-    if (!ownerData) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "Only owner can invite admins",
-        }),
-        {
-          status: 403,
-          headers: corsHeaders,
-        }
+    // Confirm that the tenant exists and is active.
+    const { data: tenant, error: tenantError } = await supabaseAdmin
+      .from("Coaching-3_Tenants")
+      .select("id, is_active")
+      .eq("id", tenantId)
+      .maybeSingle();
+
+    if (tenantError || !tenant || !tenant.is_active) {
+      return jsonResponse({ error: "Tenant not found or inactive" }, 404);
+    }
+
+    // Only an owner of THIS tenant may invite.
+    const { data: membership, error: membershipError } = await supabaseAdmin
+      .from("Coaching-3_TenantAdmins")
+      .select("role")
+      .eq("tenant_id", tenantId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (
+      membershipError ||
+      !membership ||
+      membership.role !== "owner"
+    ) {
+      return jsonResponse(
+        { error: "Only this tenant's owner can invite admins" },
+        403
       );
     }
 
-    // ✅ Get request body
-    const { email, role } =
-      await req.json();
+    // Check existing admin profile only within this tenant.
+    const { data: existingAdmin, error: existingError } = await supabaseAdmin
+      .from("Coaching-3_Admins")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .ilike("email", email)
+      .maybeSingle();
 
-    if (!email || !role) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "Email and role required",
-        }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
-      );
+    if (existingError) {
+      return jsonResponse({ error: "Could not check existing admin" }, 500);
     }
-
-    // ✅ Check existing admin
-    const { data: existingAdmin } =
-      await supabaseAdmin
-        .from("Coaching-3_Admins")
-        .select("*")
-        .eq("email", email)
-        .maybeSingle();
 
     if (existingAdmin) {
-      return new Response(
-        JSON.stringify({
-          error: "Admin already exists",
-        }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
+      return jsonResponse(
+        { error: "This email already has an admin profile in this coaching" },
+        409
       );
     }
 
-    // ✅ Invite user
-    const {
-      data,
-      error: inviteError,
-    } =
-      await supabaseAdmin.auth.admin.inviteUserByEmail(
+    const { data: inviteData, error: inviteError } =
+      await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        redirectTo:  "https://cbm-coaching-management.netlify.app/set-password",
+      });
+
+    if (inviteError || !inviteData.user) {
+      return jsonResponse(
+        { error: inviteError?.message || "Failed to invite user" },
+        400
+      );
+    }
+
+    const invitedUserId = inviteData.user.id;
+
+    // Create the tenant-scoped admin profile.
+    const { error: profileError } = await supabaseAdmin
+      .from("Coaching-3_Admins")
+      .insert({
         email,
-        {
-          redirectTo:
-            "https://coaching-3.netlify.app/set-password",
-        }
-      );
+        role,
+        user_id: invitedUserId,
+        status: "pending",
+        tenant_id: tenantId,
+      });
 
-    if (inviteError || !data.user) {
-      return new Response(
-        JSON.stringify({
-          error:
-            inviteError?.message ||
-            "Failed to invite admin",
-        }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
+    if (profileError) {
+      return jsonResponse(
+        { error: `Invite sent, but admin profile could not be created: ${profileError.message}` },
+        500
       );
     }
 
-    // ✅ Insert into admins table
-    const { error: insertError } =
+    // Add membership so the user is associated with this tenant.
+    const { error: membershipInsertError } = await supabaseAdmin
+      .from("Coaching-3_TenantAdmins")
+      .insert({
+        tenant_id: tenantId,
+        user_id: invitedUserId,
+        role,
+      });
+
+    if (membershipInsertError) {
+      // Remove the profile created above to avoid a partial setup.
       await supabaseAdmin
         .from("Coaching-3_Admins")
-        .insert({
-          email,
-          role,
-          user_id: data.user.id,
-          status: "pending",
-        });
+        .delete()
+        .eq("tenant_id", tenantId)
+        .eq("user_id", invitedUserId);
 
-    if (insertError) {
-      return new Response(
-        JSON.stringify({
-          error:
-            insertError.message,
-        }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
+      return jsonResponse(
+        { error: `Invite sent, but tenant membership could not be created: ${membershipInsertError.message}` },
+        500
       );
     }
 
-    // ✅ Success
-    return new Response(
-      JSON.stringify({
-        success: true,
-      }),
+    return jsonResponse({ success: true });
+  } catch (error) {
+    return jsonResponse(
       {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          "Content-Type":
-            "application/json",
-        },
-      }
+        error:
+          error instanceof Error ? error.message : "Unknown error",
+      },
+      500
     );
-
-  }catch (error) {
-
-  return new Response(
-    JSON.stringify({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Unknown error",
-    }),
-    {
-      status: 500,
-      headers: corsHeaders,
-    }
-  );
-}
+  }
 });

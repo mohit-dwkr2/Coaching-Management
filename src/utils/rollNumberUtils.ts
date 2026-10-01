@@ -3,10 +3,14 @@ import { supabase } from "@/supabaseClient";
 /**
  * Returns next available roll number for a batch.
  */
-export async function getNextRollNumber(batchId: string) {
+export async function getNextRollNumber(
+    batchId: string,
+    tenantId: string
+) {
     const { data, error } = await supabase
         .from("Coaching-3_Students")
         .select("roll_number")
+        .eq("tenant_id", tenantId)
         .eq("batch_id", batchId)
         .order("roll_number", { ascending: false })
         .limit(1);
@@ -18,11 +22,14 @@ export async function getNextRollNumber(batchId: string) {
     return highestRoll + 1;
 }
 
-
-export async function getHighestRollNumber(batchId: string) {
+export async function getHighestRollNumber(
+    batchId: string,
+    tenantId: string
+) {
     const { data, error } = await supabase
         .from("Coaching-3_Students")
         .select("roll_number")
+        .eq("tenant_id", tenantId)
         .eq("batch_id", batchId)
         .order("roll_number", { ascending: false })
         .limit(1);

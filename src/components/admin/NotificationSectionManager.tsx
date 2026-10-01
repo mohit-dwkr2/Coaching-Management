@@ -6,8 +6,10 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from "sonner"
+import { useTenant } from '@/contexts/TenantContext';
 
 const NotificationSectionManager = () => {
+  const { tenant, loading: tenantLoading } = useTenant();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,9 +29,10 @@ const NotificationSectionManager = () => {
   const [batches, setBatches] = useState<any[]>([]);
 
   useEffect(() => {
+    if (tenantLoading || !tenant?.id) return;
     fetchNotifications();
     fetchCourses();
-  }, []);
+  }, [tenant?.id, tenantLoading]);
 
 
   useEffect(() => {
@@ -39,9 +42,11 @@ const NotificationSectionManager = () => {
     }
 
     const fetchBatches = async () => {
+      if (!tenant?.id) return; // <--- Tenant check
       const { data } = await supabase
         .from("Coaching-3_StudentBatches")
         .select("id,batch_name")
+        .eq("tenant_id", tenant.id) // <--- Add this line
         .eq("course_id", selectedCourse)
         .eq("status", "active")
         .order("batch_name");
@@ -56,9 +61,11 @@ const NotificationSectionManager = () => {
 
 
   const fetchCourses = async () => {
+    if (!tenant?.id) return; // <--- Tenant check
     const { data } = await supabase
       .from("Coaching-3_Courses")
       .select("id, course_name")
+      .eq("tenant_id", tenant.id) // <--- Add this line
       .eq("status", "active")
       .order("course_name");
 
@@ -68,20 +75,22 @@ const NotificationSectionManager = () => {
   };
 
   const fetchNotifications = async () => {
+    if (!tenant?.id) return; // <--- Tenant check
     setLoading(true);
     const { data, error } = await supabase
       .from("Coaching-3_Notifications")
       .select(`
-    *,
-    course:course_id (
-      id,
-      course_name
-    ),
-    batch:batch_id (
-      id,
-      batch_name
-    )
-  `)
+  *,
+  course:Coaching-3_Courses!notifications_course_tenant_fk(
+    id,
+    course_name
+  ),
+  batch:Coaching-3_StudentBatches!notifications_batch_tenant_fk(
+    id,
+    batch_name
+  )
+`)
+      .eq("tenant_id", tenant.id) // <--- Add this line
       .order("created_at", { ascending: false });
 
     if (!error) setNotifications(data || []);
@@ -91,9 +100,8 @@ const NotificationSectionManager = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!title.trim()) {
-      toast.error("Title is required");
+    if (!tenant?.id) {
+      toast.error("Coaching not loaded");
       return;
     }
 
@@ -137,24 +145,21 @@ const NotificationSectionManager = () => {
     };
 
     if (editingId) {
-
       const { error } = await supabase
         .from("Coaching-3_Notifications")
         .update(payload)
-        .eq("id", editingId);
+        .eq("id", editingId)
+        .eq("tenant_id", tenant.id); // <--- Add tenant check
 
       if (!error)
         toast.success("Notification Updated!");
-
     } else {
-
       const { error } = await supabase
         .from("Coaching-3_Notifications")
-        .insert([payload]);
+        .insert([{ ...payload, tenant_id: tenant.id }]); // <--- tenant_id payload me attach kiya
 
       if (!error)
         toast.success("Notification Sent!");
-
     }
 
     resetForm();
@@ -163,11 +168,13 @@ const NotificationSectionManager = () => {
 
 
   const deleteNotification = async (id: string) => {
+    if (!tenant?.id) return;
     if (window.confirm('Kya aap ise sach mein delete karna chahte hain?')) {
       const { error } = await supabase
         .from('Coaching-3_Notifications')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('tenant_id', tenant.id); // <--- Add tenant check
 
       if (!error) fetchNotifications();
     }

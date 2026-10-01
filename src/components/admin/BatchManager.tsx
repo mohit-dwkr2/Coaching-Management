@@ -2,36 +2,60 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Edit2, X, Save, Loader2 } from "lucide-react";
-import { supabase } from "@/supabaseClient"; 
+import { supabase } from "@/supabaseClient";
+import { useTenant } from "@/contexts/TenantContext";
+import { toast } from "sonner";
 
 export default function BatchManager() {
+  const { tenant, loading: tenantLoading } = useTenant();
   const [batches, setBatchState] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ className: "", subjects: "", timing: "", fees: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const fetchBatches = async () => {
+    if (tenantLoading) return;
+    if (!tenant?.id) {
+      setBatchState([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from("Coaching-3_Batches")
       .select("*")
+      .eq("tenant_id", tenant.id)
       .order("created_at", { ascending: false });
 
-    if (!error && data) setBatchState(data);
+    if (error) {
+      console.error("Fetch batches error:", error);
+      toast.error("Unable to load batches.");
+    } else {
+      setBatchState(data ?? []);
+    }
     setLoading(false);
   };
-
   useEffect(() => {
+    if (tenantLoading) return;
     fetchBatches();
-  }, []);
+  }, [tenant?.id, tenantLoading]);
+
 
   const addOrUpdate = async () => {
-    if (!form.className) return;
+    if (!tenant?.id) {
+      toast.error("Coaching could not be identified.");
+      return;
+    }
+
+    if (!form.className.trim()) {
+      toast.error("Please enter class.");
+      return;
+    }
 
     const batchData = {
-      class_name: form.className,
-      subjects: form.subjects,
-      start_time: form.timing,
+      class_name: form.className.trim(),
+      subjects: form.subjects.trim(),
+      start_time: form.timing.trim(),
       price: Number(form.fees) || 0,
     };
 
@@ -39,15 +63,37 @@ export default function BatchManager() {
       const { error } = await supabase
         .from("Coaching-3_Batches")
         .update(batchData)
-        .eq("id", editingId);
-      
-      if (!error) setEditingId(null);
-    } else {
-      await supabase.from("Coaching-3_Batches").insert([batchData]);
-    }
+        .eq("id", editingId)
+        .eq("tenant_id", tenant.id);
 
+      if (error) {
+        console.error("Update batch error:", error);
+        toast.error("Unable to update batch.");
+        return;
+      }
+
+      setEditingId(null);
+      toast.success("Batch updated.");
+    } else {
+      const { error } = await supabase
+        .from("Coaching-3_Batches")
+        .insert([
+          {
+            ...batchData,
+            tenant_id: tenant.id,
+          },
+        ]);
+
+      if (error) {
+        console.error("Add batch error:", error);
+        toast.error("Unable to add batch.");
+        return;
+      }
+
+      toast.success("Batch added.");
+    }
     setForm({ className: "", subjects: "", timing: "", fees: "" });
-    fetchBatches();
+    await fetchBatches();
   };
 
   const startEdit = (b: any) => {
@@ -66,8 +112,25 @@ export default function BatchManager() {
   };
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from("Coaching-3_Batches").delete().eq("id", id);
-    if (!error) fetchBatches();
+    if (!tenant?.id) {
+      toast.error("Coaching could not be identified.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("Coaching-3_Batches")
+      .delete()
+      .eq("id", id)
+      .eq("tenant_id", tenant.id);
+
+    if (error) {
+      console.error("Delete batch error:", error);
+      toast.error("Unable to delete batch.");
+      return;
+    }
+
+    toast.success("Batch deleted.");
+    await fetchBatches();
   };
 
   return (
@@ -86,15 +149,15 @@ export default function BatchManager() {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
-           <Input placeholder="Course Title" value={form.subjects} onChange={(e) => setForm({ ...form, subjects: e.target.value })} className="text-sm" />
+          <Input placeholder="Course Title" value={form.subjects} onChange={(e) => setForm({ ...form, subjects: e.target.value })} className="text-sm" />
 
           <Input type="number" placeholder="Class" value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value })} className="text-sm" />
-         
+
           <Input placeholder="Timing" value={form.timing} onChange={(e) => setForm({ ...form, timing: e.target.value })} className="text-sm" />
 
           <Input type="number" placeholder="Fees" value={form.fees} onChange={(e) => setForm({ ...form, fees: e.target.value })} className="text-sm" />
         </div>
-        
+
         <div className="flex flex-wrap gap-3">
           <Button onClick={addOrUpdate} disabled={loading} className="flex-1 sm:flex-none h-11 sm:h-10">
             {editingId ? <><Save className="h-4 w-4 mr-2" /> Update</> : <><Plus className="h-4 w-4 mr-2" /> Add Batch</>}

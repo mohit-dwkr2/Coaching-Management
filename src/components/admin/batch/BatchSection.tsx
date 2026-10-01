@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Layers, Plus } from "lucide-react";
@@ -6,6 +6,7 @@ import { Layers, Plus } from "lucide-react";
 import BatchTable from "./BatchTable";
 import BatchDrawer from "./BatchDrawer";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
 
 
 interface BatchSectionProps {
@@ -15,93 +16,96 @@ interface BatchSectionProps {
 export default function BatchSection({
   onUpdated,
 }: BatchSectionProps) {
+  const { tenant } = useTenant();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const [batches, setBatches] = useState<any[]>([]);
 
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
 
-  const fetchBatches = async () => {
-    const { data: batches, error } = await supabase
-      .from("Coaching-3_StudentBatches")
-      .select(`
-    *,
-    course:course_id (
-      id,
-      course_name
-    )
-  `)
-      .order("batch_name");
 
-    if (error) return;
+  const fetchBatches = useCallback(async () => {
+    if (!tenant?.id) {
+      setBatches([]);
+      return;
+    }
 
-    // Students fetch
-    const { data: students } = await supabase
-      .from("Coaching-3_Students")
-      .select("batch_id")
-      .eq("status", "active");
+    try {
+      const { data: batches, error: batchesError } = await supabase
+        .from("Coaching-3_StudentBatches")
+        .select(`
+        *,
+       course:Coaching-3_Courses!student_batches_course_tenant_fk(
+          id,
+          course_name
+        )
+      `)
+        .eq("tenant_id", tenant.id)
+        .order("batch_name");
 
-    const finalBatches = batches.map((batch) => {
+      if (batchesError) throw batchesError;
 
-      const studentCount =
-        students?.filter(
-          s => s.batch_id === batch.id
-        ).length || 0;
+      const { data: students, error: studentsError } = await supabase
+        .from("Coaching-3_Students")
+        .select("batch_id")
+        .eq("tenant_id", tenant.id)
+        .eq("status", "active");
 
-      return {
-        ...batch,
-        studentCount,
-      };
+      if (studentsError) throw studentsError;
 
-    });
+      const finalBatches = (batches ?? []).map((batch) => {
+        const studentCount =
+          students?.filter((student) => student.batch_id === batch.id).length ?? 0;
 
-    setBatches(finalBatches);
-    onUpdated();
-  };
+        return {
+          ...batch,
+          studentCount,
+        };
+      });
+
+      setBatches(finalBatches);
+      onUpdated();
+    } catch (error: any) {
+      setBatches([]);
+      console.error(error);
+      toast.error("Failed to load batches.");
+    }
+  }, [tenant?.id, onUpdated]);
+
   useEffect(() => {
     fetchBatches();
-  }, []);
+  }, [fetchBatches]);
 
 
   const deleteBatch = async (batch: any) => {
-
-    if (batch.studentCount > 0) {
-
-      toast.error(
-        "Cannot delete batch. Move students first."
-      );
-
+    if (!tenant?.id) {
+      toast.error("Tenant information is missing.");
       return;
-
     }
 
-    if (
-      !window.confirm(
-        `Delete "${batch.batch_name}" ?`
-      )
-    ) {
+    if (batch.studentCount > 0) {
+      toast.error("Cannot delete this batch. Move its students first.");
+      return;
+    }
+
+    if (!window.confirm(`Delete "${batch.batch_name}"?`)) {
       return;
     }
 
     const { error } = await supabase
       .from("Coaching-3_StudentBatches")
       .delete()
-      .eq("id", batch.id);
+      .eq("id", batch.id)
+      .eq("tenant_id", tenant.id);
 
     if (error) {
-
       toast.error(error.message);
-
       return;
-
     }
 
     toast.success("Batch deleted.");
-
     await fetchBatches();
-
   };
-
 
   return (
     <div className="relative w-full bg-white rounded-3xl border border-slate-200/90 shadow-xs mt-8">

@@ -4,8 +4,10 @@ import { Trash2, Plus, Youtube, Loader2, ExternalLink, Filter } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner"
+import { useTenant } from "@/contexts/TenantContext";
 
 const VideosManager = () => {
+  const { tenant, loading: tenantLoading } = useTenant();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -24,38 +26,68 @@ const VideosManager = () => {
 
 
   const fetchCourses = async () => {
+    if (!tenant?.id) return;
+
     const { data, error } = await supabase
       .from("Coaching-3_Courses")
       .select("id, course_name")
+      .eq("tenant_id", tenant.id)
       .order("course_name");
 
     if (!error && data) {
       setCourses(data);
+    } else if (error) {
+      toast.error("Error fetching courses: " + error.message);
     }
   };
 
-
   const fetchVideos = async () => {
+    if (!tenant?.id) return;
+
     try {
       setFetching(true);
+
       const { data, error } = await supabase
         .from('Coaching-3_VideoLectures')
         .select('*')
+        .eq("tenant_id", tenant.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
       setVideos(data || []);
-    } catch (err) {
+    } catch (err: any) {
       toast.error("Error fetching videos: " + err.message);
     } finally {
       setFetching(false);
     }
   };
 
-  useEffect(() => {
-    fetchVideos();
-    fetchCourses();
-  }, []);
+useEffect(() => {
+  if (tenantLoading) return;
+
+  if (!tenant?.id) {
+    setVideos([]);
+    setCourses([]);
+    setFilterCourse("all");
+    setFilterSubject("all");
+    setFetching(false);
+    return;
+  }
+
+  setVideos([]);
+  setCourses([]);
+
+  // Reset filters when tenant changes
+  setFilterCourse("all");
+  setFilterSubject("all");
+
+  setFetching(true);
+
+  fetchVideos();
+  fetchCourses();
+}, [tenant?.id, tenantLoading]);
+
 
   const getCourseName = (courseId: string) => {
     return (
@@ -86,6 +118,12 @@ const VideosManager = () => {
 
   const handleAddVideo = async (e) => {
     e.preventDefault();
+
+    if (!tenant?.id) {
+      toast.error("Coaching not loaded");
+      return;
+    }
+
     if (
       !newVideo.title ||
       !newVideo.youtube_id ||
@@ -98,18 +136,29 @@ const VideosManager = () => {
 
     try {
       setLoading(true);
-      const { error } = await supabase.from('Coaching-3_VideoLectures').insert([newVideo]);
+
+      const { error } = await supabase
+        .from('Coaching-3_VideoLectures')
+        .insert([
+          {
+            ...newVideo,
+            tenant_id: tenant.id
+          }
+        ]);
+
       if (error) throw error;
 
       toast.success("Video Added Successfully!");
+
       setNewVideo({
         title: "",
         youtube_id: "",
         subject: "",
         course_id: ""
       });
-      fetchVideos();
-    } catch (err) {
+
+      await fetchVideos();
+    } catch (err: any) {
       toast.error("Error: " + err.message);
     } finally {
       setLoading(false);
@@ -117,12 +166,27 @@ const VideosManager = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this video?")) return;
+    if (!tenant?.id) {
+      toast.error("Coaching not loaded");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this video?")) {
+      return;
+    }
+
     try {
-      const { error } = await supabase.from('Coaching-3_VideoLectures').delete().eq('id', id);
+      const { error } = await supabase
+        .from('Coaching-3_VideoLectures')
+        .delete()
+        .eq('id', id)
+        .eq('tenant_id', tenant.id);
+
       if (error) throw error;
-      setVideos(videos.filter(v => v.id !== id));
-    } catch (err) {
+
+      setVideos(prev => prev.filter(v => v.id !== id));
+      toast.success("Video deleted successfully!");
+    } catch (err: any) {
       toast.error("Error deleting: " + err.message);
     }
   };

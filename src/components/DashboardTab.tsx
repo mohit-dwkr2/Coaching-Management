@@ -6,6 +6,7 @@ import {
     getStudentDashboardData,
 } from "@/services/dashboardService";
 import { useState, useEffect } from "react";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface DashboardTabProps {
     profile: any;
@@ -17,7 +18,7 @@ export default function DashboardTab({
     status,
 }: DashboardTabProps) {
 
-
+    const { tenant, loading: tenantLoading } = useTenant();
 
     const [dashboardData, setDashboardData] =
         useState<DashboardData | null>(null);
@@ -25,44 +26,36 @@ export default function DashboardTab({
     const [loading, setLoading] =
         useState(true);
 
-
     useEffect(() => {
 
-        if (!profile?.id) return;
+        if (!profile?.id || !tenant?.id) return;
 
         async function loadDashboard() {
             setLoading(true);
 
             const data =
-                await getStudentDashboardData(profile.id);
+                await getStudentDashboardData(
+                    profile.id,
+                    tenant.id
+                );
 
             setDashboardData(data);
 
             setLoading(false);
-
         }
 
         loadDashboard();
 
-    }, [profile]);
+    }, [profile, tenant?.id]);
 
-
-
-
-    if (loading) {
-
+    if (loading || tenantLoading) {
         return <div>Loading...</div>;
-
     }
 
     if (!dashboardData) {
         return null;
     }
-    console.log(dashboardData);
-    console.log(dashboardData.attendance);
 
-    console.log("Current Attendance:", dashboardData.attendance);
-    console.log("Attendance History:", dashboardData.attendanceHistory);
 
     return (
 

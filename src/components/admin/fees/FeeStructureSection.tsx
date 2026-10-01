@@ -5,6 +5,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FeeStructureCards from "./FeeStructureCards";
 import FeeStructureDrawer from "./FeeStructureDrawer";
+import { useTenant } from "@/contexts/TenantContext";
 
 import {
   CourseData,
@@ -21,6 +22,8 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const { tenant } = useTenant();
+
   // Drawer States
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [selectedStructure, setSelectedStructure] = useState<FeeStructure | null>(null);
@@ -36,46 +39,57 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
 
 
   const fetchCourses = useCallback(async () => {
+    if (!tenant?.id) return;
+
     try {
       const { data, error } = await supabase
         .from("Coaching-3_Courses")
         .select("id, course_name")
+        .eq("tenant_id", tenant.id)
         .order("course_name", { ascending: true });
 
       if (error) throw error;
 
       setCourses(data || []);
     } catch (err: any) {
-      console.error("Course collection compilation drop:", err.message);
-      toast.error("Failed to accurately map courses list metadata assets");
+      console.error("Course fetch error:", err.message);
+      toast.error("Failed to load courses.");
     }
-  }, []);
+  }, [tenant?.id]);
 
 
   const fetchFeeStructures = useCallback(async () => {
+    if (!tenant?.id) return;
+
     try {
       const { data, error } = await supabase
         .from("Coaching-3_FeeStructures")
         .select(`
-        id,
-        course_id,
-        total_fee,
-        admission_fee,
-        registration_fee,
-        duration_months,
-        status,
-        created_at,
-        updated_at,
-        course:course_id (id, course_name)
-      `);
-
-      const { data: studentFees, error: studentFeesError } = await supabase
-        .from("Coaching-3_StudentFees")
-        .select("fee_structure_id");
-
-      if (studentFeesError) throw studentFeesError;
+    id,
+    course_id,
+    total_fee,
+    admission_fee,
+    registration_fee,
+    duration_months,
+    status,
+    created_at,
+    updated_at,
+    course:Coaching-3_Courses!fee_structures_course_tenant_fk(
+      id,
+      course_name
+    )
+  `)
+        .eq("tenant_id", tenant.id);
 
       if (error) throw error;
+
+      const { data: studentFees, error: studentFeesError } =
+        await supabase
+          .from("Coaching-3_StudentFees")
+          .select("fee_structure_id")
+          .eq("tenant_id", tenant.id);
+
+      if (studentFeesError) throw studentFeesError;
 
       const structuresWithCount = (data || []).map((structure) => ({
         ...structure,
@@ -87,12 +101,13 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
 
       setStructures(structuresWithCount);
     } catch (err: any) {
-      toast.error(`Database core payload compilation error: ${err.message}`);
+      toast.error(`Failed to load fee structures: ${err.message}`);
     }
-  }, []);
-
+  }, [tenant?.id]);
 
   const refreshData = useCallback(async () => {
+    if (!tenant?.id) return;
+
     setLoading(true);
 
     try {
@@ -103,11 +118,13 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
     } finally {
       setLoading(false);
     }
-  }, [fetchCourses, fetchFeeStructures]);
+  }, [fetchCourses, fetchFeeStructures, tenant?.id]);
 
   useEffect(() => {
+    if (!tenant?.id) return;
+
     refreshData();
-  }, [refreshData, refreshTrigger]);
+  }, [refreshData, refreshTrigger, tenant?.id]);
 
 
   const handleCreateOpen = () => {
@@ -122,6 +139,11 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
 
 
   const handleToggleStatus = async (structure: FeeStructure) => {
+    if (!tenant?.id) {
+      toast.error("Coaching tenant is not loaded.");
+      return;
+    }
+
     try {
       const newStatus =
         structure.status === "active"
@@ -134,7 +156,8 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
           status: newStatus,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", structure.id);
+        .eq("id", structure.id)
+        .eq("tenant_id", tenant.id);
 
       if (error) throw error;
 
@@ -153,6 +176,10 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
 
 
   const handleDelete = async (id: string) => {
+    if (!tenant?.id) {
+      toast.error("Coaching tenant is not loaded.");
+      return;
+    }
 
     const structure = structures.find((s) => s.id === id);
 
@@ -167,7 +194,8 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
       const { error } = await supabase
         .from("Coaching-3_FeeStructures")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenant.id);
 
       if (error) throw error;
 
@@ -181,7 +209,13 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
 
 
 
-  const handleSave = async (formData: Omit<FeeStructure, "id" | "course"> & { id?: string }) => {
+  const handleSave = async (
+    formData: Omit<FeeStructure, "id" | "course"> & { id?: string }
+  ) => {
+    if (!tenant?.id) {
+      toast.error("Coaching tenant is not loaded.");
+      return;
+    }
     if (
       formData.duration_months < 1 ||
       formData.duration_months > 60
@@ -222,7 +256,8 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
             status: formData.status,
             updated_at: new Date().toISOString()
           })
-          .eq("id", formData.id);
+          .eq("id", formData.id)
+          .eq("tenant_id", tenant.id);
 
         if (error) throw error;
         toast.success("Fee structure updated successfully.");
@@ -232,13 +267,14 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
           .from("Coaching-3_FeeStructures")
           .insert([
             {
+              tenant_id: tenant.id,
               course_id: formData.course_id,
               total_fee: formData.total_fee,
               admission_fee: formData.admission_fee,
               registration_fee: formData.registration_fee,
               duration_months: formData.duration_months,
-              status: formData.status
-            }
+              status: formData.status,
+            },
           ]);
 
         if (error) throw error;
@@ -329,16 +365,16 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
             type="button"
             onClick={() => setStatusFilter("all")}
             className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${statusFilter === "all"
-                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
               }`}
           >
             <span>All</span>
 
             <span
               className={`px-1.5 py-0.2 rounded-full text-[10px] ${statusFilter === "all"
-                  ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900"
-                  : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900"
+                : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
                 }`}
             >
               {totalCount}
@@ -349,16 +385,16 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
             type="button"
             onClick={() => setStatusFilter("active")}
             className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${statusFilter === "active"
-                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
               }`}
           >
             <span>Active</span>
 
             <span
               className={`px-1.5 py-0.2 rounded-full text-[10px] ${statusFilter === "active"
-                  ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900"
-                  : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900"
+                : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
                 }`}
             >
               {activeCount}
@@ -369,16 +405,16 @@ export default function FeeStructureSection({ searchQuery, refreshTrigger }: Fee
             type="button"
             onClick={() => setStatusFilter("inactive")}
             className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${statusFilter === "inactive"
-                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
               }`}
           >
             <span>Inactive</span>
 
             <span
               className={`px-1.5 py-0.2 rounded-full text-[10px] ${statusFilter === "inactive"
-                  ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900"
-                  : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                ? "bg-slate-700 text-slate-100 dark:bg-slate-300 dark:text-slate-900"
+                : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
                 }`}
             >
               {inactiveCount}

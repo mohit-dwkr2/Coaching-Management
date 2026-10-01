@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
-import { supabase } from '@/supabaseClient'
-import { Bell, Clock, Megaphone, Loader2 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useQuery } from '@tanstack/react-query' // React Query Import
+import { supabase } from "@/supabaseClient";
+import { Bell, Clock, Megaphone, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface Notification {
   id: string
@@ -21,18 +21,20 @@ interface Notification {
 }
 
 const NotificationSection = ({ profile }: { profile?: any }) => {
+  const { tenant } = useTenant();
 
 
   // ✅ REACT QUERY: Data fetch aur Cache logic
-  const { data: notifications = [], isLoading } = useQuery({
-
+  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: [
       "notifications",
+      tenant?.id,
       profile?.course_id,
       profile?.batch_id,
     ],
 
     queryFn: async () => {
+      if (!tenant?.id || !profile?.course_id) return [];
 
       const filters = [
         "target_type.eq.global",
@@ -49,27 +51,27 @@ const NotificationSection = ({ profile }: { profile?: any }) => {
       const { data, error } = await supabase
         .from("Coaching-3_Notifications")
         .select(`
-      *,
-      course:course_id(
-        course_name
-      ),
-      batch:batch_id(
-        batch_name
-      )
-    `)
+  *,
+  course:Coaching-3_Courses!notifications_course_tenant_fk(
+    course_name
+  ),
+  batch:Coaching-3_StudentBatches!notifications_batch_tenant_fk(
+    batch_name
+  )
+`)
+        .eq("tenant_id", tenant.id)
         .or(filters.join(","))
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      return (data as Notification[]) || [];
+      return (data as Notification[]) ?? [];
     },
 
-    enabled: !!profile?.course_id,
+    enabled: !!tenant?.id && !!profile?.course_id,
 
     staleTime: 1000 * 60 * 15,
     gcTime: 1000 * 60 * 30,
-
   });
 
   const visibleNotifications = notifications

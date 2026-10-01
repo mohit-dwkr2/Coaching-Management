@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import AttendanceFilters from "./AttendanceFilters";
 import AttendanceDrawer from "./AttendanceDrawer";
@@ -9,9 +9,11 @@ import { printTable } from "@/utils/printTable";
 import ExportAttendanceModal from "./ExportAttendanceModal";
 import { CalendarCheck, Download, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTenant } from "@/contexts/TenantContext";
 
 export default function AttendanceManager() {
 
+    const { tenant } = useTenant();
     const [selectedCourse, setSelectedCourse] = useState("");
     const [selectedBatch, setSelectedBatch] = useState("");
 
@@ -41,54 +43,57 @@ export default function AttendanceManager() {
     };
 
 
-    const loadExportData = async () => {
-        try {
-            const [
-                coursesRes,
-                batchesRes,
-                studentsRes,
-            ] = await Promise.all([
+    const loadExportData = useCallback(async () => {
+        if (!tenant?.id) {
+            setCourses([]);
+            setBatches([]);
+            setStudents([]);
+            return;
+        }
 
+        try {
+            const [coursesRes, batchesRes, studentsRes] = await Promise.all([
                 supabase
                     .from("Coaching-3_Courses")
                     .select("*")
+                    .eq("tenant_id", tenant.id)
                     .order("course_name"),
 
                 supabase
                     .from("Coaching-3_StudentBatches")
                     .select("*")
+                    .eq("tenant_id", tenant.id)
                     .eq("status", "active")
                     .order("batch_name"),
 
                 supabase
                     .from("Coaching-3_Students")
                     .select(`
-          *,
-          course:Coaching-3_Courses(course_name),
-          batch:Coaching-3_StudentBatches(batch_name)
-        `)
+                    *,
+                    course:Coaching-3_Courses(course_name),
+                    batch:Coaching-3_StudentBatches(batch_name)
+                `)
+                    .eq("tenant_id", tenant.id)
                     .eq("status", "active")
                     .order("name")
-
             ]);
 
-            if (coursesRes.data)
-                setCourses(coursesRes.data);
+            if (coursesRes.error) throw coursesRes.error;
+            if (batchesRes.error) throw batchesRes.error;
+            if (studentsRes.error) throw studentsRes.error;
 
-            if (batchesRes.data)
-                setBatches(batchesRes.data);
-
-            if (studentsRes.data)
-                setStudents(studentsRes.data);
-
-        } catch (error) {
+            setCourses(coursesRes.data ?? []);
+            setBatches(batchesRes.data ?? []);
+            setStudents(studentsRes.data ?? []);
+        } catch (error: any) {
             console.error(error);
+            toast.error("Error loading attendance export data: " + error.message);
         }
-    };
+    }, [tenant?.id]);
 
     useEffect(() => {
         loadExportData();
-    }, []);
+    }, [loadExportData]);
 
 
     const mapAttendanceSession = (session: any) => ({
@@ -131,6 +136,10 @@ export default function AttendanceManager() {
         fromDate?: string,
         toDate?: string
     ) => {
+        if (!tenant?.id) {
+            toast.error("Tenant not found. Please refresh and try again.");
+            return;
+        }
 
         let exportData = [...attendanceSessions];
 
@@ -160,6 +169,7 @@ export default function AttendanceManager() {
                 batch_name
             )
         `)
+                .eq("tenant_id", tenant.id)
                 .order("attendance_date", {
                     ascending: false,
                 });
@@ -217,6 +227,7 @@ export default function AttendanceManager() {
                 batch_name
             )
         `)
+                .eq("tenant_id", tenant.id)
                 .order("attendance_date", {
                     ascending: false,
                 });
@@ -268,6 +279,7 @@ export default function AttendanceManager() {
                 batch_name
             )
         `)
+                .eq("tenant_id", tenant.id)
                 .order("attendance_date", {
                     ascending: false,
                 });
@@ -315,7 +327,7 @@ export default function AttendanceManager() {
     status,
     remarks,
 
-    student:Coaching-3_Students!attendance_records_student_fk(
+    student:Coaching-3_Students!attendance_records_student_tenant_fk(
       id,
       name,
       roll_number,
@@ -331,10 +343,11 @@ export default function AttendanceManager() {
       )
     ),
 
-    session:Coaching-3_AttendanceSessions!attendance_records_session_fk(
+    session:Coaching-3_AttendanceSessions!attendance_records_session_tenant_fk(
       attendance_date
     )
-  `);
+  `)
+                .eq("tenant_id", tenant.id);
 
 
 
@@ -435,7 +448,7 @@ export default function AttendanceManager() {
             status,
             remarks,
 
-            student:Coaching-3_Students!attendance_records_student_fk(
+            student:Coaching-3_Students!attendance_records_student_tenant_fk(
                 id,
                 name,
                 roll_number,
@@ -451,10 +464,11 @@ export default function AttendanceManager() {
                 )
             ),
 
-            session:Coaching-3_AttendanceSessions!attendance_records_session_fk(
+            session:Coaching-3_AttendanceSessions!attendance_records_session_tenant_fk(
                 attendance_date
             )
-        `);
+        `)
+                .eq("tenant_id", tenant.id);
 
             if (error) {
                 toast.error(error.message);
@@ -540,7 +554,7 @@ export default function AttendanceManager() {
             status,
             remarks,
 
-            student:Coaching-3_Students!attendance_records_student_fk(
+            student:Coaching-3_Students!attendance_records_student_tenant_fk(
                 id,
                 name,
                 roll_number,
@@ -556,10 +570,11 @@ export default function AttendanceManager() {
                 )
             ),
 
-            session:Coaching-3_AttendanceSessions!attendance_records_session_fk(
+            session:Coaching-3_AttendanceSessions!attendance_records_session_tenant_fk(
                 attendance_date
             )
-        `);
+        `)
+                .eq("tenant_id", tenant.id);
 
             if (error) {
                 toast.error(error.message);
@@ -662,6 +677,7 @@ export default function AttendanceManager() {
 
 
     const printAttendance = async (
+
         reportType: string,
         courseId?: string,
         batchId?: string,
@@ -669,6 +685,10 @@ export default function AttendanceManager() {
         fromDate?: string,
         toDate?: string
     ) => {
+        if (!tenant?.id) {
+            toast.error("Tenant not found. Please refresh and try again.");
+            return;
+        }
 
         let printData = [...attendanceSessions];
 
@@ -710,6 +730,7 @@ export default function AttendanceManager() {
                 batch_name
             )
         `)
+                .eq("tenant_id", tenant.id)
                 .order("attendance_date", {
                     ascending: false,
                 });
@@ -776,6 +797,7 @@ export default function AttendanceManager() {
                 batch_name
             )
         `)
+                .eq("tenant_id", tenant.id)
                 .order("attendance_date", {
                     ascending: false,
                 });
@@ -872,6 +894,7 @@ export default function AttendanceManager() {
                 batch_name
             )
         `)
+                .eq("tenant_id", tenant.id)
                 .order("attendance_date", {
                     ascending: false,
                 });
@@ -952,7 +975,7 @@ export default function AttendanceManager() {
             status,
             remarks,
 
-            student:Coaching-3_Students!attendance_records_student_fk(
+            student:Coaching-3_Students!attendance_records_student_tenant_fk(
                 id,
                 name,
                 roll_number,
@@ -968,10 +991,11 @@ export default function AttendanceManager() {
                 )
             ),
 
-            session:Coaching-3_AttendanceSessions!attendance_records_session_fk(
+            session:Coaching-3_AttendanceSessions!attendance_records_session_tenant_fk(
                 attendance_date
             )
-        `);
+        `)
+                .eq("tenant_id", tenant.id);
 
             if (error) {
                 toast.error(error.message);
@@ -1053,7 +1077,7 @@ export default function AttendanceManager() {
             status,
             remarks,
 
-            student:Coaching-3_Students!attendance_records_student_fk(
+            student:Coaching-3_Students!attendance_records_student_tenant_fk(
                 id,
                 name,
                 roll_number,
@@ -1069,10 +1093,11 @@ export default function AttendanceManager() {
                 )
             ),
 
-            session:Coaching-3_AttendanceSessions!attendance_records_session_fk(
+            session:Coaching-3_AttendanceSessions!attendance_records_session_tenant_fk(
                 attendance_date
             )
-        `);
+        `)
+                .eq("tenant_id", tenant.id);
 
             if (error) {
                 toast.error(error.message);
@@ -1150,7 +1175,7 @@ export default function AttendanceManager() {
             status,
             remarks,
 
-            student:Coaching-3_Students!attendance_records_student_fk(
+            student:Coaching-3_Students!attendance_records_student_tenant_fk(
                 id,
                 name,
                 roll_number,
@@ -1166,10 +1191,11 @@ export default function AttendanceManager() {
                 )
             ),
 
-            session:Coaching-3_AttendanceSessions!attendance_records_session_fk(
+            session:Coaching-3_AttendanceSessions!attendance_records_session_tenant_fk(
                 attendance_date
             )
-        `);
+        `)
+                .eq("tenant_id", tenant.id);
 
             if (error) {
                 toast.error(error.message);

@@ -1,11 +1,11 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Plus, BookOpen } from "lucide-react";
 import CourseDrawer from "./CourseDrawer";
 import CourseTable from "./CourseTable";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
 
 
 interface CourseSectionProps {
@@ -15,101 +15,107 @@ interface CourseSectionProps {
 export default function CourseSection({
   onUpdated,
 }: CourseSectionProps) {
+const { tenant } = useTenant();
 
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+const [courses, setCourses] = useState<any[]>([]);
+const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
-  const fetchCourses = async () => {
+const fetchCourses = useCallback(async () => {
+  if (!tenant?.id) {
+    setCourses([]);
+    return;
+  }
 
-    // 1. Courses
+  try {
+    // 1. Tenant's courses
     const { data: courses, error: courseError } = await supabase
       .from("Coaching-3_Courses")
       .select("*")
+      .eq("tenant_id", tenant.id)
       .order("course_name");
 
-    if (courseError) return;
+    if (courseError) throw courseError;
 
-    // 2. Batches
-    const { data: batches } = await supabase
+    // 2. Tenant's batches
+    const { data: batches, error: batchesError } = await supabase
       .from("Coaching-3_StudentBatches")
-      .select("course_id");
+      .select("course_id")
+      .eq("tenant_id", tenant.id);
 
-    // 3. Students
-    const { data: students } = await supabase
+    if (batchesError) throw batchesError;
+
+    // 3. Tenant's active students
+    const { data: students, error: studentsError } = await supabase
       .from("Coaching-3_Students")
       .select("course_id")
+      .eq("tenant_id", tenant.id)
       .eq("status", "active");
 
-    const finalCourses = courses.map((course) => {
+    if (studentsError) throw studentsError;
 
+    const finalCourses = (courses ?? []).map((course) => {
       const batchCount =
-        batches?.filter(
-          b => b.course_id === course.id
-        ).length || 0;
+        batches?.filter((batch) => batch.course_id === course.id).length ?? 0;
 
       const studentCount =
-        students?.filter(
-          s => s.course_id === course.id
-        ).length || 0;
+        students?.filter((student) => student.course_id === course.id).length ?? 0;
 
       return {
         ...course,
         batchCount,
         studentCount,
       };
-
     });
 
     setCourses(finalCourses);
     onUpdated();
+  } catch (error) {
+    console.error("Failed to load courses:", error);
+    setCourses([]);
+    toast.error("Failed to load courses.");
+  }
+}, [tenant?.id, onUpdated]);
 
-  };
+useEffect(() => {
+  fetchCourses();
+}, [fetchCourses]);
 
-  useEffect(() => {
-    fetchCourses();
-  }, []);
+const deleteCourse = async (course: any) => {
+  if (!tenant?.id) {
+    toast.error("Tenant information is missing.");
+    return;
+  }
 
+  if (course.batchCount > 0) {
+    toast.error("Cannot delete course. Remove all batches first.");
+    return;
+  }
 
-  const deleteCourse = async (course: any) => {
+  if (course.studentCount > 0) {
+    toast.error("Cannot delete course. Students are still enrolled.");
+    return;
+  }
 
-    if (course.batchCount > 0) {
-      toast.error(
-        "Cannot delete course. Remove all batches first."
-      );
-      return;
-    }
+  if (!window.confirm(`Delete "${course.course_name}"?`)) {
+    return;
+  }
 
-    if (course.studentCount > 0) {
-      toast.error(
-        "Cannot delete course. Students are still enrolled."
-      );
-      return;
-    }
+  const { error } = await supabase
+    .from("Coaching-3_Courses")
+    .delete()
+    .eq("id", course.id)
+    .eq("tenant_id", tenant.id);
 
-    if (
-      !window.confirm(
-        `Delete "${course.course_name}" ?`
-      )
-    ) {
-      return;
-    }
+  if (error) {
+    console.error("Failed to delete course:", error);
+    toast.error(error.message);
+    return;
+  }
 
-    const { error } = await supabase
-      .from("Coaching-3_Courses")
-      .delete()
-      .eq("id", course.id);
-
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-
-    toast.success("Course deleted.");
-
-    await fetchCourses();
-
-  };
+  toast.success("Course deleted.");
+  await fetchCourses();
+};
 
 
   return (

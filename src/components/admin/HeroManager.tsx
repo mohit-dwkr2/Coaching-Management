@@ -6,15 +6,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/supabaseClient";
+import { useTenant } from "@/contexts/TenantContext";
 
 const DEFAULT_HERO = {
   heading: "Where Excellence Meets Ambition",
   subheading: "Empowering K-12 students with expert coaching, proven results, and a clear path to academic greatness — for over 15 years.",
- image_url: "/hero.webp",
+  image_url: "/hero.webp",
   highlight_word: "Excellence" // Default highlight word
 };
 
 export default function HeroManager() {
+  const { tenant, loading: tenantLoading } = useTenant();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [heroId, setHeroId] = useState<number | null>(null);
@@ -27,38 +29,41 @@ export default function HeroManager() {
     highlight_word: "", // New Field
   });
 
- const fetchHeroData = async () => {
-  setLoading(true);
-  const { data, error } = await supabase
-    .from("Coaching-3_Hero")
-    .select("*")
-    .limit(1)
-    .single();
+  const fetchHeroData = async () => {
+    if (!tenant?.id) return; // <--- Tenant check
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("Coaching-3_Hero")
+      .select("*")
+      .eq("tenant_id", tenant.id) // <--- Add this line
+      .limit(1)
+      .maybeSingle(); // single() ki jagah maybeSingle() better rehta hai
 
-  if (!error && data) {
-    setHeroId(data.id);
-    setForm({
-      heading: data.heading || DEFAULT_HERO.heading,
-      subheading: data.subheading || DEFAULT_HERO.subheading,
-      image_url: data.image_url || DEFAULT_HERO.image_url,
-      highlight_word: data.highlight_word || DEFAULT_HERO.highlight_word
-    });
-  } else {
-    // 🔥 Reset ke baad ya data na milne par empty strings ki jagah default values bharein
-    setHeroId(null);
-    setForm({
-      heading: DEFAULT_HERO.heading,
-      subheading: DEFAULT_HERO.subheading,
-      image_url: DEFAULT_HERO.image_url,
-      highlight_word: DEFAULT_HERO.highlight_word
-    });
-  }
-  setLoading(false);
-};
+    if (!error && data) {
+      setHeroId(data.id);
+      setForm({
+        heading: data.heading || DEFAULT_HERO.heading,
+        subheading: data.subheading || DEFAULT_HERO.subheading,
+        image_url: data.image_url || DEFAULT_HERO.image_url,
+        highlight_word: data.highlight_word || DEFAULT_HERO.highlight_word
+      });
+    } else {
+      // 🔥 Reset ke baad ya data na milne par empty strings ki jagah default values bharein
+      setHeroId(null);
+      setForm({
+        heading: DEFAULT_HERO.heading,
+        subheading: DEFAULT_HERO.subheading,
+        image_url: DEFAULT_HERO.image_url,
+        highlight_word: DEFAULT_HERO.highlight_word
+      });
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
+    if (tenantLoading || !tenant?.id) return;
     fetchHeroData();
-  }, []);
+  }, [tenant?.id, tenantLoading]);
 
   const handleHeadingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -76,7 +81,7 @@ export default function HeroManager() {
     setUploading(true);
     const fileExt = file.name.split('.').pop();
     const fileName = `hero-${Date.now()}.${fileExt}`;
-    const filePath = `hero_images-3/${fileName}`;
+    const filePath = `${tenant.id}/hero_images-3/${fileName}`; // <--- tenant.id add kiya
 
     const { error: uploadError } = await supabase.storage
       .from('coaching-3_data')
@@ -95,6 +100,10 @@ export default function HeroManager() {
   };
 
   const handleSave = async () => {
+    if (!tenant?.id) {
+      toast.error("Coaching not loaded");
+      return;
+    }
     setLoading(true);
     const payload = {
       heading: form.heading.trim() || DEFAULT_HERO.heading,
@@ -106,9 +115,15 @@ export default function HeroManager() {
 
     let result;
     if (heroId) {
-      result = await supabase.from("Coaching-3_Hero").update(payload).eq("id", heroId);
+      result = await supabase
+        .from("Coaching-3_Hero")
+        .update(payload)
+        .eq("id", heroId)
+        .eq("tenant_id", tenant.id); // <--- Tenant filter add kiya
     } else {
-      result = await supabase.from("Coaching-3_Hero").insert([payload]);
+      result = await supabase
+        .from("Coaching-3_Hero")
+        .insert([{ ...payload, tenant_id: tenant.id }]); // <--- tenant_id payload mein add kiya
     }
 
     if (!result.error) {
@@ -120,30 +135,35 @@ export default function HeroManager() {
     setLoading(false);
   };
 
- const handleDeleteAll = async () => {
-  if (!confirm("Are you sure? This will reset the section to default values.")) return;
-  
-  setLoading(true);
-  
-  // 1. Database se delete karein
-  if (heroId) {
-    const { error } = await supabase.from("Coaching-3_Hero").delete().eq("id", heroId);
-    if (error) toast.error("Database reset failed");
-  }
-  
-  // 2. 🔥 FRONTEND STATE FIX: 
-  // Hum values ko "" (empty) nahi karenge, balki seedha DEFAULT_HERO se bhar denge.
-  setForm({ 
-    heading: DEFAULT_HERO.heading, 
-    subheading: DEFAULT_HERO.subheading, 
-    image_url: DEFAULT_HERO.image_url, // Ab ye khali nahi hoga, default image lega
-    highlight_word: DEFAULT_HERO.highlight_word 
-  });
-  
-  setHeroId(null);
-  setLoading(false);
-  toast.success("Section reset to default state");
-};
+  const handleDeleteAll = async () => {
+    if (!confirm("Are you sure? This will reset the section to default values.")) return;
+
+    setLoading(true);
+
+    // 1. Database se delete karein
+    if (!tenant?.id) return;
+    if (heroId) {
+      const { error } = await supabase
+        .from("Coaching-3_Hero")
+        .delete()
+        .eq("id", heroId)
+        .eq("tenant_id", tenant.id); // <--- Tenant filter add kiya
+      if (error) toast.error("Database reset failed");
+    }
+
+    // 2. 🔥 FRONTEND STATE FIX: 
+    // Hum values ko "" (empty) nahi karenge, balki seedha DEFAULT_HERO se bhar denge.
+    setForm({
+      heading: DEFAULT_HERO.heading,
+      subheading: DEFAULT_HERO.subheading,
+      image_url: DEFAULT_HERO.image_url, // Ab ye khali nahi hoga, default image lega
+      highlight_word: DEFAULT_HERO.highlight_word
+    });
+
+    setHeroId(null);
+    setLoading(false);
+    toast.success("Section reset to default state");
+  };
 
   // Helper for Preview Highlight
   const renderPreviewHeading = () => {
@@ -185,7 +205,7 @@ export default function HeroManager() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 md:p-6 space-y-5">
-              
+
               {/* Heading Input */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
@@ -196,9 +216,9 @@ export default function HeroManager() {
                     {form.heading.split(/\s+/).filter(Boolean).length}/7 Words
                   </span>
                 </div>
-                <Input 
-                  value={form.heading} 
-                  onChange={handleHeadingChange} 
+                <Input
+                  value={form.heading}
+                  onChange={handleHeadingChange}
                   placeholder="Enter main heading..."
                 />
               </div>
@@ -208,22 +228,22 @@ export default function HeroManager() {
                 <label className="text-sm font-semibold flex items-center gap-2">
                   <Highlighter className="w-4 h-4 text-blue-700" /> Word to Highlight (blue Color)
                 </label>
-                <Input 
-                  value={form.highlight_word} 
-                  onChange={(e) => setForm({...form, highlight_word: e.target.value})} 
+                <Input
+                  value={form.highlight_word}
+                  onChange={(e) => setForm({ ...form, highlight_word: e.target.value })}
                   placeholder="Example: Excellence"
                   className="border-blue-200 focus:ring-blue-500"
                 />
                 <p className="text-[10px] text-muted-foreground italic">Type the exact word from the heading you want to color blue.</p>
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-sm font-semibold flex items-center gap-2">
                   <AlignLeft className="w-4 h-4 text-primary" /> Subheading
                 </label>
-                <Textarea 
-                  value={form.subheading} 
-                  onChange={(e) => setForm({...form, subheading: e.target.value})} 
+                <Textarea
+                  value={form.subheading}
+                  onChange={(e) => setForm({ ...form, subheading: e.target.value })}
                   placeholder="Enter description..."
                   className="min-h-[80px]"
                 />
@@ -234,9 +254,9 @@ export default function HeroManager() {
                   <ImageIcon className="w-4 h-4 text-primary" /> Background Image
                 </label>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Input 
-                    value={form.image_url} 
-                    onChange={(e) => setForm({...form, image_url: e.target.value})} 
+                  <Input
+                    value={form.image_url}
+                    onChange={(e) => setForm({ ...form, image_url: e.target.value })}
                     placeholder="Image URL"
                     className="flex-1"
                   />
@@ -263,10 +283,10 @@ export default function HeroManager() {
             <CardContent className="p-4">
               <div className="rounded-xl border overflow-hidden bg-background shadow-lg">
                 <div className="relative aspect-video bg-muted">
-                  <img 
-                    src={form.image_url || DEFAULT_HERO.image_url} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover" 
+                  <img
+                    src={form.image_url || DEFAULT_HERO.image_url}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="p-4 space-y-2">

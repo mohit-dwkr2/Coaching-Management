@@ -3,6 +3,7 @@ import { User, BookOpen, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
+import { useTenant } from "@/contexts/TenantContext";
 
 type FacultyType = {
   id: string;
@@ -14,93 +15,83 @@ type FacultyType = {
 
 
 export default function FacultySection() {
+  const { tenant } = useTenant();
 
   const [page, setPage] = useState(0);
-  const [facultyData, setFacultyData] = useState<FacultyType[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
   // ✅ Scroll detect (load only when visible)
-useEffect(() => {
-  const section = document.getElementById("faculty");
+  useEffect(() => {
+    const section = document.getElementById("faculty");
 
-  const observer = new IntersectionObserver(
-    ([entry]) => {
-      if (entry.isIntersecting) {
-        setIsVisible(true);
-        observer.unobserve(entry.target); // 🔥 stop observing after first load
-      }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target); // 🔥 stop observing after first load
+        }
+      },
+      { rootMargin: "100px" }
+    );
+
+    if (section) observer.observe(section);
+
+    return () => {
+      if (section) observer.unobserve(section);
+    };
+  }, []);
+
+
+
+
+  // ✅ Fetch + cache (1 hour)
+  const EMPTY_FACULTY: FacultyType[] = [];
+
+  const { data, isError } = useQuery<FacultyType[]>({
+    queryKey: ["faculty", tenant?.id],
+    queryFn: async () => {
+      if (!tenant?.id) return [];
+
+      const { data, error } = await supabase.rpc(
+        "get_public_coaching_site",
+        {
+          p_domain: window.location.hostname,
+        }
+      );
+
+      if (error) throw error;
+
+      return data?.faculty ?? [];
     },
-    { rootMargin: "100px" }
+    enabled: isVisible && !!tenant?.id,
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60 * 2,
+  });
+
+  const allFaculty = data ?? EMPTY_FACULTY;
+
+  const facultyData = allFaculty.slice(
+    0,
+    (page + 1) * 4
   );
 
-  if (section) observer.observe(section);
+  const hasMore = allFaculty.length > facultyData.length;
 
-  return () => {
-    if (section) observer.unobserve(section);
+
+  // ✅ load next page
+  const handleShowMore = () => {
+    setPage(prev => prev + 1);
   };
-}, []);
-
-  
-
-// ✅ Fetch + cache (1 hour)
-const { data = [] } = useQuery<FacultyType[]>({
-  queryKey: ["faculty", page],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from("Coaching-3_Faculty")
-      .select("id, name, subject, experience_years, image_url")
-      .order("created_at", { ascending: false })
-      .range(page * 4, page * 4 + 3);
-
-    if (error) throw error;
-    return data ?? [];
-  },
-  enabled: isVisible,
-  staleTime: 1000 * 60 * 60,
-  gcTime: 1000 * 60 * 60 * 2,
-
-  // ✅ FIX: v5 compatible
-  placeholderData: (prev) => prev,
-});
 
 
-// ✅ append data safely
-useEffect(() => {
-  if (data.length > 0) {
-   setFacultyData(prev => {
-  const ids = new Set(prev.map(item => item.id));
-  const newItems = data.filter(item => !ids.has(item.id));
-  return [...prev, ...newItems];
-});
-  }
-}, [data]);
+  // ✅ reset to first page
+  const handleShowLess = () => {
+    setPage(0);
 
-useEffect(() => {
-  if (page === 0 && data.length > 0) {
-    setFacultyData(data);
-  }
-}, [page, data]);
-
-// ✅ check if more data exists
-const hasMore = data.length === 4;
-
-
-// ✅ load next page
-const handleShowMore = () => {
-  setPage(prev => prev + 1);
-};
-
-
-// ✅ reset to first page
-const handleShowLess = () => {
-  setPage(0);
-
-  setFacultyData(prev => prev.slice(0, 4));
-
-  document
-    .getElementById("faculty")
-    ?.scrollIntoView({ behavior: "smooth" });
-};
+    document
+      .getElementById("faculty")
+      ?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <section id="faculty" className="py-24 bg-gradient-to-b from-white to-[#f0f7ff] relative overflow-hidden">
@@ -199,7 +190,7 @@ const handleShowLess = () => {
         <div className="text-center mt-10">
           {hasMore ? (
             <button onClick={handleShowMore} className="h-14 rounded-full px-10 border-2 border-gray-200 text-gray-700 font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm">
-              Show More 
+              Show More
             </button>
           ) : facultyData.length > 4 ? (
             <button onClick={handleShowLess} className="h-14 rounded-full px-10 border-2 border-gray-200 text-gray-700 font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm">

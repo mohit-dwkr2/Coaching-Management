@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Plus, FileText, Upload, Edit2, X, Save, FileUp, Loader2 } from "lucide-react";
 import { supabase } from "@/supabaseClient";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
 
 export default function StudyMaterialManager() {
+  const { tenant, loading: tenantLoading } = useTenant();
   const [materials, setMaterials] = useState<any[]>([]);
   const [form, setForm] = useState({
     title: "",
@@ -41,23 +43,28 @@ export default function StudyMaterialManager() {
   });
 
   const fetchMaterials = async () => {
+    if (!tenant?.id) return; // <--- Tenant guard
     const { data } = await supabase
       .from("Coaching-3_StudyMaterial")
       .select("*")
+      .eq("tenant_id", tenant.id) // <--- Add this line
       .order("created_at", { ascending: false });
     if (data) setMaterials(data);
   };
 
   const fetchCourses = async () => {
+    if (!tenant?.id) return; // <--- Tenant guard
     const { data, error } = await supabase
       .from("Coaching-3_Courses")
       .select("id, course_name")
+      .eq("tenant_id", tenant.id) // <--- Add this line
       .order("course_name");
 
     if (!error && data) {
       setCourses(data);
     }
   };
+
 
   const handleView = async (filePath) => {
     const { data } = await supabase
@@ -73,9 +80,10 @@ export default function StudyMaterialManager() {
   };
 
   useEffect(() => {
+    if (tenantLoading || !tenant?.id) return;
     fetchMaterials();
     fetchCourses();
-  }, []);
+  }, [tenant?.id, tenantLoading]);
 
   const availableSubjects = [
     ...new Set(
@@ -102,16 +110,22 @@ export default function StudyMaterialManager() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!tenant?.id) {
+      toast.error("Coaching not loaded");
+      return;
+    }
+
     try {
       setIsUploading(true);
 
       // Agar Edit kar rahe hain aur nayi file select ki, toh purani delete karo
       if (editingId && form.file_url) {
         const oldPath = form.file_url;
-        await supabase.storage.from('coaching-3_private').remove([oldPath]);
+        if (oldPath.startsWith(`${tenant.id}/`)) {
+          await supabase.storage.from('coaching-3_private').remove([oldPath]);
+        }
       }
-
-      const filePath = `notes-3/${Date.now()}_${file.name}`;
+      const filePath = `${tenant.id}/notes-3/${Date.now()}_${file.name}`; // <--- Private Bucket Path Tenant Scoped
 
       const { error: uploadError } = await supabase.storage
         .from('coaching-3_private')
@@ -130,6 +144,10 @@ export default function StudyMaterialManager() {
   };
 
   const addOrUpdate = async () => {
+    if (!tenant?.id) {
+      toast.error("Coaching not loaded");
+      return;
+    }
     if (
       !form.title ||
       !form.course_id ||
@@ -153,7 +171,8 @@ export default function StudyMaterialManager() {
         const { error } = await supabase
           .from("Coaching-3_StudyMaterial")
           .update(payload)
-          .eq("id", editingId);
+          .eq("id", editingId)
+          .eq("tenant_id", tenant.id); // <--- Add this
 
         if (error) throw error;
         toast.success("Material updated!");
@@ -161,11 +180,12 @@ export default function StudyMaterialManager() {
       } else {
         const { error } = await supabase
           .from("Coaching-3_StudyMaterial")
-          .insert([payload]);
+          .insert([{ ...payload, tenant_id: tenant.id }]); // <--- tenant_id payload mein attach kiya
 
         if (error) throw error;
         toast.success("Added to Library!");
       }
+
       setForm({
         title: "",
         course_id: "",
@@ -207,6 +227,10 @@ export default function StudyMaterialManager() {
   // --- UPDATED REMOVE (Deletes from Storage + DB) ---
   const remove = async (id: string) => {
     if (!confirm("Delete this material permanently?")) return;
+    if (!tenant?.id) {
+      toast.error("Coaching not loaded");
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -215,16 +239,20 @@ export default function StudyMaterialManager() {
         .from("Coaching-3_StudyMaterial")
         .select("file_url")
         .eq("id", id)
+        .eq("tenant_id", tenant.id) // <--- Add tenant check
         .single();
 
-      if (item?.file_url) {
+      if (item?.file_url && item.file_url.startsWith(`${tenant.id}/`)) {
         const filePath = item.file_url;
         await supabase.storage.from('coaching-3_private').remove([filePath]);
       }
 
       // 2. DB record delete karo
-      const { error } = await supabase.from("Coaching-3_StudyMaterial").delete().eq("id", id);
-      if (error) throw error;
+      const { error } = await supabase
+        .from("Coaching-3_StudyMaterial")
+        .delete()
+        .eq("id", id)
+        .eq("tenant_id", tenant.id); // <--- Add tenant check
 
       toast.success("Material deleted!");
       fetchMaterials();

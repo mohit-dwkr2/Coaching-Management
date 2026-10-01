@@ -2,13 +2,17 @@ import { supabase } from "@/supabaseClient";
 import { PaymentHistory } from "../types";
 
 export async function getStudentPaymentHistory(
-  studentFeeId: string
+  studentFeeId: string,
+  tenantId: string
 ): Promise<PaymentHistory[]> {
+  if (!studentFeeId || !tenantId) return [];
+
   try {
     const { data, error } = await supabase
       .from("Coaching-3_FeeTransactions")
       .select("*")
       .eq("student_fee_id", studentFeeId)
+      .eq("tenant_id", tenantId)
       .order("transaction_date", { ascending: false });
 
     if (error) {

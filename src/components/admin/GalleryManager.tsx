@@ -2,10 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Image as ImageIcon, Upload, Edit2, X, Save, Loader2 } from "lucide-react";
-import { supabase } from "@/supabaseClient"; 
+import { supabase } from "@/supabaseClient";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
 
 export default function GalleryManager() {
+  const { tenant, loading: tenantLoading } = useTenant();
   const [gallery, setGalleryState] = useState<any[]>([]);
   const [form, setForm] = useState({ url: "", caption: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -13,16 +15,19 @@ export default function GalleryManager() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchGallery = async () => {
+    if (!tenant?.id) return; // <--- Tenant check
     const { data, error } = await supabase
       .from("Coaching-3_Gallery")
       .select("*")
+      .eq("tenant_id", tenant.id) // <--- Add this line
       .order("created_at", { ascending: false });
     if (data) setGalleryState(data);
   };
 
   useEffect(() => {
+    if (tenantLoading || !tenant?.id) return; // <--- Loading guard
     fetchGallery();
-  }, []);
+  }, [tenant?.id, tenantLoading]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,7 +46,7 @@ export default function GalleryManager() {
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `gallery_images-3/${fileName}`;
+      const filePath = `${tenant.id}/gallery_images-3/${fileName}`; // <--- tenant.id add kiya
 
       const { error: uploadError } = await supabase.storage
         .from('coaching-3_data')
@@ -68,16 +73,18 @@ export default function GalleryManager() {
         const { error } = await supabase
           .from("Coaching-3_Gallery")
           .update({ image_url: form.url, caption: form.caption })
-          .eq("id", editingId);
+          .eq("id", editingId)
+          .eq("tenant_id", tenant.id); // <--- Add this line
         if (error) throw error;
         toast.success("Gallery updated!");
       } else {
         const { error } = await supabase
           .from("Coaching-3_Gallery")
-          .insert([{ image_url: form.url, caption: form.caption }]);
+          .insert([{ image_url: form.url, caption: form.caption, tenant_id: tenant.id }]); // <--- tenant_id add kiya
         if (error) throw error;
         toast.success("Added to Gallery!");
       }
+
       setForm({ url: "", caption: "" });
       setEditingId(null);
       fetchGallery();
@@ -102,14 +109,16 @@ export default function GalleryManager() {
   // --- UPDATED REMOVE WITH STORAGE CLEANUP ---
   const remove = async (id: string) => {
     if (!confirm("Are you sure you want to delete this image?")) return;
-    
+
     setLoading(true);
     try {
+      // 1. Image URL fetch karo storage se delete karne ke liye
       // 1. Image URL fetch karo storage se delete karne ke liye
       const { data: item } = await supabase
         .from("Coaching-3_Gallery")
         .select("image_url")
         .eq("id", id)
+        .eq("tenant_id", tenant.id) // <--- Add this line
         .single();
 
       if (item?.image_url && item.image_url.includes('coaching-3_data/')) {
@@ -120,10 +129,15 @@ export default function GalleryManager() {
       }
 
       // 2. Database row delete karo
-      const { error } = await supabase.from("Coaching-3_Gallery").delete().eq("id", id);
-      
+      // 2. Database row delete karo
+      const { error } = await supabase
+        .from("Coaching-3_Gallery")
+        .delete()
+        .eq("id", id)
+        .eq("tenant_id", tenant.id); // <--- Add this line
+
       if (error) throw error;
-      
+
       toast.success("Image removed");
       fetchGallery();
     } catch (error: any) {
@@ -144,28 +158,28 @@ export default function GalleryManager() {
         <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-primary mb-4">
           {editingId ? "Edit Image Details" : "Add New Image"}
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-slate-600 ml-1">Paste Image URL Or Upload From Device</label>
               <div className="flex gap-2">
-                <Input 
-                  className="rounded-xl border-slate-200 text-sm h-11 md:h-10" 
-                  placeholder="https://images.com/photo.jpg" 
-                  value={form.url} 
-                  onChange={(e) => setForm({ ...form, url: e.target.value })} 
+                <Input
+                  className="rounded-xl border-slate-200 text-sm h-11 md:h-10"
+                  placeholder="https://images.com/photo.jpg"
+                  value={form.url}
+                  onChange={(e) => setForm({ ...form, url: e.target.value })}
                 />
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  ref={fileInputRef} 
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={fileInputRef}
                   onChange={handleFileUpload}
                 />
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   disabled={loading}
                   className="rounded-xl border-slate-200 text-slate-600 shrink-0 h-11 md:h-10 px-3"
                   onClick={() => fileInputRef.current?.click()}
@@ -177,11 +191,11 @@ export default function GalleryManager() {
 
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-slate-600 ml-1">Caption</label>
-              <Input 
-                className="rounded-xl border-slate-200 text-sm h-11 md:h-10" 
-                placeholder="Student Celebration 2026..." 
-                value={form.caption} 
-                onChange={(e) => setForm({ ...form, caption: e.target.value })} 
+              <Input
+                className="rounded-xl border-slate-200 text-sm h-11 md:h-10"
+                placeholder="Student Celebration 2026..."
+                value={form.caption}
+                onChange={(e) => setForm({ ...form, caption: e.target.value })}
               />
             </div>
           </div>
@@ -200,7 +214,7 @@ export default function GalleryManager() {
 
         <div className="flex flex-col sm:flex-row gap-3 mt-6 border-t border-slate-50 pt-6">
           <Button onClick={addOrUpdate} disabled={loading} className="rounded-xl px-8 font-bold shadow-lg shadow-primary/20 h-11 sm:h-10 w-full sm:w-auto">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : editingId ? <Save className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />} 
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : editingId ? <Save className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
             {editingId ? "Update Image" : "Add to Gallery"}
           </Button>
           {editingId && (
@@ -217,7 +231,7 @@ export default function GalleryManager() {
           <div key={g.id} className="group relative bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-primary/50">
             <div className="aspect-square relative overflow-hidden">
               <img src={g.image_url} alt={g.caption} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-              
+
               <div className="absolute inset-0 bg-slate-900/60 sm:opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                 <Button size="icon" variant="secondary" className="rounded-lg h-10 w-10 bg-white text-slate-900 hover:bg-primary hover:text-white shadow-xl" onClick={() => startEdit(g)}>
                   <Edit2 className="h-5 w-5" />
@@ -227,7 +241,7 @@ export default function GalleryManager() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="p-3 bg-white">
               <p className="text-xs md:text-sm font-bold text-slate-800 truncate">{g.caption || "No caption"}</p>
             </div>

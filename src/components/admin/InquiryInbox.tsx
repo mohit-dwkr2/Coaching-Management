@@ -4,47 +4,90 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/supabaseClient";
+import { useTenant } from "@/contexts/TenantContext";
 
 export default function InquiryInbox() {
+  const { tenant } = useTenant();
+
   const [inquiries, setInquiriesState] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const fetchInquiries = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("Coaching-3_Contactform")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setInquiriesState(data || []);
-    } catch (error: any) {
-      toast.error("Error fetching inquiries: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const fetchInquiries = async () => {
+      if (!tenant?.id) {
+        setInquiriesState([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const { data, error } = await supabase
+          .from("Coaching-3_Contactform")
+          .select("*")
+          .eq("tenant_id", tenant.id)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        if (!cancelled) {
+          setInquiriesState(data || []);
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          toast.error("Error fetching inquiries: " + error.message);
+          setInquiriesState([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
     fetchInquiries();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant?.id]);
 
   const handleDelete = async (id: string | number) => {
+    if (!tenant?.id) {
+      toast.error("Tenant not found. Please refresh and try again.");
+      return;
+    }
+
+    if (deletingId !== null) return;
+
     try {
+      setDeletingId(id);
+
       const { error } = await supabase
         .from("Coaching-3_Contactform")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenant.id);
 
       if (error) throw error;
 
-      setInquiriesState(inquiries.filter((q) => q.id !== id));
-      toast.error("Inquiry deleted");
+      setInquiriesState((current) =>
+        current.filter((inquiry) => inquiry.id !== id)
+      );
+
+      toast.success("Inquiry deleted");
     } catch (error: any) {
       toast.error("Failed to delete: " + error.message);
+    } finally {
+      setDeletingId(null);
     }
   };
+
+
 
   if (loading) {
     return (
@@ -282,19 +325,24 @@ export default function InquiryInbox() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          disabled={deletingId === q.id}
                           onClick={() => handleDelete(q.id)}
                           className="
-                          rounded-xl
-                          h-10
-                          w-10
-                          text-slate-400
-                          hover:text-red-500
-                          hover:bg-red-50
-                          shrink-0
-                          transition-all
-                        "
+    rounded-xl
+    h-10
+    w-10
+    text-slate-400
+    hover:text-red-500
+    hover:bg-red-50
+    shrink-0
+    transition-all
+  "
                         >
-                          <Trash2 className="h-4.5 w-4.5" />
+                          {deletingId === q.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>

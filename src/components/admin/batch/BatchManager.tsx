@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import CourseSection from "./CourseSection";
 import BatchSection from "./BatchSection";
 import { CheckCircle2, Layers, Sparkles, Users, UserX } from "lucide-react";
+import { useTenant } from "@/contexts/TenantContext";
+import { toast } from "sonner";
 
 export default function BatchManager() {
+  const { tenant } = useTenant();
   const [courses, setCourses] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalBatches: 0,
@@ -13,70 +16,101 @@ export default function BatchManager() {
     unassignedStudents: 0,
   });
 
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
+    if (!tenant?.id) {
+      setCourses([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("Coaching-3_Courses")
       .select("*")
+      .eq("tenant_id", tenant.id)
       .order("course_name");
 
-    if (!error && data) {
-      setCourses(data);
+    if (error) {
+      console.error(error);
+      toast.error("Failed to load courses.");
+      return;
     }
-  };
+    setCourses(data ?? []);
+  }, [tenant?.id]);
 
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
+    if (!tenant?.id) {
+      setStats({
+        totalBatches: 0,
+        activeBatches: 0,
+        assignedStudents: 0,
+        unassignedStudents: 0,
+      });
+      return;
+    }
+
     try {
+      const [
+        totalBatchesResult,
+        activeBatchesResult,
+        assignedStudentsResult,
+        unassignedStudentsResult,
+      ] = await Promise.all([
+        supabase
+          .from("Coaching-3_StudentBatches")
+          .select("*", { count: "exact", head: true })
+          .eq("tenant_id", tenant.id),
 
-      // Total Batches
-      const { count: totalBatches } = await supabase
-        .from("Coaching-3_StudentBatches")
-        .select("*", { count: "exact", head: true });
+        supabase
+          .from("Coaching-3_StudentBatches")
+          .select("*", { count: "exact", head: true })
+          .eq("tenant_id", tenant.id)
+          .eq("status", "active"),
 
-      // Active Batches
-      const { count: activeBatches } = await supabase
-        .from("Coaching-3_StudentBatches")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "active");
+        supabase
+          .from("Coaching-3_Students")
+          .select("*", { count: "exact", head: true })
+          .eq("tenant_id", tenant.id)
+          .not("batch_id", "is", null)
+          .eq("status", "active"),
 
-      // Assigned Students
-      const { count: assignedStudents } = await supabase
-        .from("Coaching-3_Students")
-        .select("*", { count: "exact", head: true })
-        .not("batch_id", "is", null)
-        .eq("status", "active");
+        supabase
+          .from("Coaching-3_Students")
+          .select("*", { count: "exact", head: true })
+          .eq("tenant_id", tenant.id)
+          .is("batch_id", null)
+          .eq("status", "active"),
+      ]);
 
+      const results = [
+        totalBatchesResult,
+        activeBatchesResult,
+        assignedStudentsResult,
+        unassignedStudentsResult,
+      ];
 
-      // Unassigned Students
-      const { count: unassignedStudents } = await supabase
-        .from("Coaching-3_Students")
-        .select("*", { count: "exact", head: true })
-        .is("batch_id", null)
-        .eq("status", "active");
+      const failedResult = results.find((result) => result.error);
+      if (failedResult?.error) throw failedResult.error;
 
       setStats({
-        totalBatches: totalBatches || 0,
-        activeBatches: activeBatches || 0,
-        assignedStudents: assignedStudents || 0,
-        unassignedStudents: unassignedStudents || 0,
+        totalBatches: totalBatchesResult.count ?? 0,
+        activeBatches: activeBatchesResult.count ?? 0,
+        assignedStudents: assignedStudentsResult.count ?? 0,
+        unassignedStudents: unassignedStudentsResult.count ?? 0,
       });
-
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load batch statistics.");
     }
-  };
+  }, [tenant?.id]);
 
   useEffect(() => {
     fetchCourses();
     fetchStats();
-  }, []);
+  }, [fetchCourses, fetchStats]);
 
-
-  const refreshBatchManager = async () => {
-    await fetchCourses();
-    await fetchStats();
-  };
-
+  const refreshBatchManager = useCallback(async () => {
+    await Promise.all([fetchCourses(), fetchStats()]);
+  }, [fetchCourses, fetchStats]);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb- pt-14">
@@ -91,7 +125,7 @@ export default function BatchManager() {
             Batch Manager
           </h1>
           <p className="text-slate-500 font-medium text-sm sm:text-base mt-1.5">
-             Manage batches, courses, and student assignments with ease.
+            Manage batches, courses, and student assignments with ease.
           </p>
         </div>
       </div>

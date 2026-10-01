@@ -5,14 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/supabaseClient"; // Supabase client check kar lein
+import { useTenant } from "@/contexts/TenantContext";
 
 export default function FacultyManager() {
+  const { tenant, loading: tenantLoading } = useTenant();
   const [facultyList, setFacultyList] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [oldImageUrl, setOldImageUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     subject: "",
@@ -22,50 +24,84 @@ export default function FacultyManager() {
 
   // 1. Database se data load karna
   const fetchFaculty = async () => {
-    const { data } = await supabase.from("Coaching-3_Faculty").select("*").order("created_at", { ascending: false });
-    if (data) setFacultyList(data);
+    if (!tenant?.id) return;
+    const { data, error } = await supabase
+      .from("Coaching-3_Faculty")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("Fetch faculty error:", error);
+      toast.error("Could not load faculty");
+      return;
+    }
+    setFacultyList(data || []);
   };
-
   useEffect(() => {
+    if (tenantLoading || !tenant?.id) return;
     fetchFaculty();
-  }, []);
+  }, [tenant?.id, tenantLoading]);
 
   // 2. Image Bucket Upload Logic (coaching-3_data/faculty)
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!tenant?.id) {
+      toast.error("Coaching not loaded");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
 
     try {
       setLoading(true);
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `faculty_images-3/${fileName}`;
+      const fileExt = file.name.split(".").pop() || "jpg";
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${tenant.id}/faculty_images-3/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('coaching-3_data')
+        .from("coaching-3_data")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // Upload successful hone ke baad old image delete karo
-    if (isEditing && oldImageUrl) {
-      const oldPath = oldImageUrl.split(
-        "/storage/v1/object/public/coaching-3_data/"
-      )[1];
+      const { data } = supabase.storage
+        .from("coaching-3_data")
+        .getPublicUrl(filePath);
 
-      if (oldPath) {
-        await supabase.storage
-          .from("coaching-3_data")
-          .remove([oldPath]);
+      // Nayi image ka URL form mein set karo
+      setFormData((prev) => ({
+        ...prev,
+        image: data.publicUrl,
+      }));
+      setOldImageUrl(data.publicUrl);
+
+      // Purani image delete karo, agar edit mode mein hai
+      if (isEditing && oldImageUrl) {
+        const marker = "/storage/v1/object/public/coaching-3_data/";
+        const oldPath = oldImageUrl.split(marker)[1];
+
+        if (oldPath?.startsWith(`${tenant.id}/`)) {
+          const { error: removeError } = await supabase.storage
+            .from("coaching-3_data")
+            .remove([oldPath]);
+
+          if (removeError) {
+            console.error("Old faculty image removal failed:", removeError);
+          }
+        }
       }
-    }
 
-
-      const { data } = supabase.storage.from('coaching-3_data').getPublicUrl(filePath);
-      setFormData({ ...formData, image: data.publicUrl });
-      toast.success("Image uploaded Successfully!");
+      toast.success("Image uploaded successfully!");
     } catch (error: any) {
+      console.error("Faculty image upload error:", error);
       toast.error("Upload failed: " + error.message);
     } finally {
       setLoading(false);
@@ -74,6 +110,11 @@ export default function FacultyManager() {
 
   // 3. Save ya Update Logic
   const handleSave = async () => {
+    if (!tenant?.id) {
+      toast.error("Coaching not loaded");
+      return;
+    }
+
     if (!formData.name || !formData.subject || !formData.experience) {
       toast.error("Please fill all required fields");
       return;
@@ -81,6 +122,7 @@ export default function FacultyManager() {
 
     setLoading(true);
     const dbPayload = {
+      tenant_id: tenant.id,
       name: formData.name,
       subject: formData.subject,
       experience_years: Number(formData.experience) || 0,
@@ -89,7 +131,11 @@ export default function FacultyManager() {
 
     try {
       if (isEditing) {
-        await supabase.from("Coaching-3_Faculty").update(dbPayload).eq("id", isEditing);
+        await supabase
+          .from("Coaching-3_Faculty")
+          .update(dbPayload)
+          .eq("id", isEditing)
+          .eq("tenant_id", tenant.id);
         toast.success("Faculty updated!");
       } else {
         await supabase.from("Coaching-3_Faculty").insert([dbPayload]);
@@ -122,38 +168,39 @@ export default function FacultyManager() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-const handleDelete = async (faculty: any) => {
-  if (!confirm("Remove this faculty?")) return;
+  const handleDelete = async (faculty: any) => {
+    if (!confirm("Remove this faculty?")) return;
 
-  try {
-    // Delete image from bucket
-    if (faculty.image_url) {
-      const imagePath = faculty.image_url.split(
-        "/storage/v1/object/public/coaching-3_data/"
-      )[1];
+    try {
+      // Delete image from bucket
+      if (faculty.image_url) {
+        const imagePath = faculty.image_url.split(
+          "/storage/v1/object/public/coaching-3_data/"
+        )[1];
 
-      if (imagePath) {
-        await supabase.storage
-          .from("coaching-3_data")
-          .remove([imagePath]);
+        if (imagePath) {
+          await supabase.storage
+            .from("coaching-3_data")
+            .remove([imagePath]);
+        }
       }
+
+      // Delete database row
+      const { error } = await supabase
+        .from("Coaching-3_Faculty")
+        .delete()
+        .eq("id", faculty.id)
+        .eq("tenant_id", tenant.id);
+
+      if (error) throw error;
+
+      fetchFaculty();
+
+      toast.success("Faculty removed");
+    } catch (err) {
+      toast.error("Failed to delete faculty");
     }
-
-    // Delete database row
-    const { error } = await supabase
-      .from("Coaching-3_Faculty")
-      .delete()
-      .eq("id", faculty.id);
-
-    if (error) throw error;
-
-    fetchFaculty();
-
-    toast.success("Faculty removed");
-  } catch (err) {
-    toast.error("Failed to delete faculty");
-  }
-};
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-10">
@@ -212,7 +259,7 @@ const handleDelete = async (faculty: any) => {
 
               <div className="md:col-span-2 flex gap-3 mt-2">
                 <Button onClick={handleSave} disabled={loading} className="flex-1 h-11 font-bold shadow-lg shadow-primary/20">
-                  {loading ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-5 w-5" />} 
+                  {loading ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-5 w-5" />}
                   {isEditing ? "Update Changes" : "Confirm & Save"}
                 </Button>
                 {isEditing && <Button variant="outline" onClick={resetForm} className="h-11 px-6"><X className="h-5 w-5" /></Button>}

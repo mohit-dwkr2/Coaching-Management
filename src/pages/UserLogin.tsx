@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
 import {
   User,
   Mail,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 
 export default function UserLogin() {
+  const { tenant, loading: tenantLoading, error: tenantError } = useTenant();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -29,11 +31,17 @@ export default function UserLogin() {
 
   // ✅ SESSION CHECK
   useEffect(() => {
+    if (tenantLoading || !tenant?.id) return;
+    let cancelled = false;
     const checkSession = async () => {
       try {
         const {
           data: { session },
+          error: sessionError,
         } = await supabase.auth.getSession();
+
+        if (sessionError) throw sessionError;
+        if (cancelled) return;
 
         if (!session?.user) {
           setCheckingSession(false);
@@ -42,63 +50,76 @@ export default function UserLogin() {
 
         const userId = session.user.id;
 
-        // First check permanent student record
-        const { data: student } = await supabase
+        const { data: student, error: studentError } = await supabase
           .from("Coaching-3_Students")
           .select("status, notes_access")
+          .eq("tenant_id", tenant.id)
           .eq("user_id", userId)
           .maybeSingle();
+
+        if (studentError) throw studentError;
+        if (cancelled) return;
 
         if (student) {
           window.location.replace("/dashboard");
           return;
         }
 
-        // Otherwise check approval request
-        const { data: profile } = await supabase
+        const { data: approval, error: approvalError } = await supabase
           .from("Coaching-3_StudentApprovals")
           .select("status")
+          .eq("tenant_id", tenant.id)
+
           .eq("user_id", userId)
           .maybeSingle();
 
-        if (!profile) {
+        if (approvalError) throw approvalError;
+        if (cancelled) return;
+
+        if (!approval || approval.status === "denied") {
           await supabase.auth.signOut();
           setCheckingSession(false);
           return;
         }
 
-        if (profile.status === "denied") {
-          await supabase.auth.signOut();
-          setCheckingSession(false);
-          return;
-        }
-
+        // Approved ya pending application: dashboard status flow ko continue karo.
         window.location.replace("/dashboard");
       } catch (error) {
-        console.error(error);
-        setCheckingSession(false);
+        console.error("Session check failed:", error);
+        if (!cancelled) setCheckingSession(false);
       }
     };
-
     checkSession();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant?.id, tenantLoading]);
+
 
 
   const fetchCourses = async () => {
-    const { data, error } = await supabase
-      .from("Coaching-3_Courses")
-      .select("*")
+    if (!tenant?.id) return;
 
-      .eq("status", "active")
-      .order("course_name");
-    if (!error && data) {
-      setCourses(data);
+    const domain = window.location.hostname.toLowerCase().trim();
+
+    const { data, error } = await supabase.rpc(
+      "get_public_coaching_site",
+      { p_domain: domain }
+    );
+
+    if (error) {
+      console.error("Courses fetch failed:", error);
+      toast.error("Unable to load courses.");
+      return;
     }
-  };
 
+    setCourses(data?.courses ?? []);
+  };
   useEffect(() => {
-    fetchCourses();
-  }, []);
+    if (tenant?.id) {
+      fetchCourses();
+    }
+  }, [tenant?.id]);
 
 
   // ✅ SEND OTP
@@ -163,210 +184,91 @@ export default function UserLogin() {
   };
 
   // ✅ VERIFY OTP
-  const handleVerifyOTP = async (
-    e: React.FormEvent
-  ) => {
-    e.preventDefault();
+const handleVerifyOTP = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (loading || otp.length !== 6) return;
+  if (loading || otp.length !== 6) return;
 
-    setLoading(true);
+  if (!tenant?.id) {
+    toast.error("Coaching could not be identified.");
+    return;
+  }
 
-    try {
-      const email = form.email.trim().toLowerCase();
+  setLoading(true);
 
-      // ✅ FIXED TYPE
-      const {
-        data: { session },
-        error: verifyError,
-      } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: "email",
+  try {
+    const email = form.email.trim().toLowerCase();
+
+    const {
+      data: { session },
+      error: verifyError,
+    } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: "email",
+    });
+
+    if (verifyError) throw verifyError;
+
+    if (!session?.user) {
+      throw new Error("Session not created");
+    }
+
+    const { data: loginResult, error: loginError } =
+      await supabase.rpc("complete_student_login", {
+        p_tenant_id: tenant.id,
+        p_name: form.name.trim(),
+        p_mobile: form.mobile.trim(),
+        p_course_id: form.course_id,
       });
 
-      if (verifyError) throw verifyError;
+    if (loginError) throw loginError;
 
-      if (!session?.user) {
-        throw new Error("Session not created");
-      }
-
-      const user = session.user;
-
-      const userId = user.id;
-      
-
-      // ============================
-      // CHECK EXISTING STUDENT
-      // ============================
-
-      const { data: linkResult, error: linkError } =
-        await supabase.rpc(
-          "Coaching-3_LinkExistingStudent",
-          {
-            p_email: email,
-          }
-        );
-
-      if (linkError) throw linkError;
-
-      console.log("EXISTING STUDENT CHECK:", linkResult);
-
-      if (linkResult?.found) {
-        // Manual admission student
-        // Student has been linked + approval marked approved
-        window.location.replace("/dashboard");
-        return;
-      }
-
-
-      const {
-        data: existingStudent,
-        error: studentError,
-      } = await supabase
-        .from("Coaching-3_Students")
-        .select("*")
-        .eq("email", email)
-        .maybeSingle();
-
-      console.log("LOGIN EMAIL:", email);
-      console.log("EXISTING STUDENT:", existingStudent);
-      console.log("STUDENT QUERY ERROR:", studentError);
-
-      if (studentError) throw studentError;
-
-      if (existingStudent) {
-
-        // Link auth user with student
-        if (!existingStudent.user_id) {
-
-          const { error: linkError } = await supabase
-            .from("Coaching-3_Students")
-            .update({
-              user_id: userId,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", existingStudent.id);
-
-          if (linkError) throw linkError;
-
-        }
-
-        // Check approval profile using email
-        const {
-          data: approvalProfile,
-          error: approvalError,
-        } = await supabase
-          .from("Coaching-3_StudentApprovals")
-          .select("*")
-          .eq("email", email)
-          .maybeSingle();
-
-        if (approvalError) throw approvalError;
-
-        // Manual admission student
-        if (!approvalProfile) {
-
-          const { error: insertApprovalError } =
-            await supabase
-              .from("Coaching-3_StudentApprovals")
-              .insert({
-                user_id: userId,
-                name: existingStudent.name,
-                email: existingStudent.email,
-                mobile: existingStudent.mobile,
-                course_id: existingStudent.course_id,
-                status: "approved",
-                updated_at: new Date().toISOString(),
-              });
-
-          if (insertApprovalError)
-            throw insertApprovalError;
-
-        }
-
-        // Existing profile but user_id missing
-        else if (!approvalProfile.user_id) {
-
-          const { error: updateApprovalError } =
-            await supabase
-              .from("Coaching-3_StudentApprovals")
-              .update({
-                user_id: userId,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", approvalProfile.id);
-
-          if (updateApprovalError)
-            throw updateApprovalError;
-        }
-        window.location.replace("/dashboard");
-        return;
-      }
-
-
-      const {
-        data: existingProfile,
-        error: fetchError,
-      } = await supabase
-        .from("Coaching-3_StudentApprovals")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      // ✅ NEW USER
-      if (!existingProfile) {
-        const { error: insertError } = await supabase
-          .from("Coaching-3_StudentApprovals")
-          .insert([
-            {
-              user_id: userId,
-              name: form.name.trim(),
-              email,
-              mobile: form.mobile.trim(),
-              course_id: form.course_id,
-              status: "pending",
-            },
-          ])
-
-        if (insertError) throw insertError;
-      }
-
-      // ✅ DENIED USER REAPPLY
-      else if (existingProfile.status === "denied") {
-        const { error: updateError } = await supabase
-          .from("Coaching-3_StudentApprovals")
-          .update({
-            name: form.name.trim(),
-            mobile: form.mobile.trim(),
-            course_id: form.course_id,
-            status: "pending",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", userId);
-
-        if (updateError) throw updateError;
-      }
-
-      // ✅ SMALL DELAY TO PREVENT RACE CONDITION
-      await new Promise((resolve) =>
-        setTimeout(resolve, 500)
-      );
-
-      window.location.replace("/dashboard");
-    } catch (err: any) {
-      console.error(err);
-
-      toast.error(
-        err?.message ||
-        "Invalid OTP or something went wrong."
-      );
-    } finally {
-      setLoading(false);
+    if (!loginResult) {
+      throw new Error("Could not complete student login.");
     }
-  };
+
+    if (
+      !["linked", "pending", "application_exists"].includes(
+        loginResult.state
+      )
+    ) {
+      throw new Error("Unexpected student login response.");
+    }
+
+    window.location.replace("/dashboard");
+    return;
+  } catch (err: any) {
+    console.error(err);
+
+    toast.error(
+      err?.message || "Invalid OTP or something went wrong."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+  if (tenantLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (tenantError || !tenant?.id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <p className="text-center text-red-600">
+          {tenantError || "Coaching could not be identified."}
+        </p>
+      </div>
+    );
+  }
+
 
   // ✅ LOADER
   if (checkingSession) {

@@ -3,6 +3,7 @@ import { exportToExcel } from "@/utils/exportExcel";
 import { printTable } from "@/utils/printTable";
 import { FileSpreadsheet, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTenant } from "@/contexts/TenantContext";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/supabaseClient";
@@ -47,6 +48,7 @@ const StudentFeeSection = ({
   onCoursesChange,
   onBatchesChange,
 }: StudentFeeSectionProps) => {
+  const { tenant, tenantLoading } = useTenant();
 
   const [selectedUnassignedStudents, setSelectedUnassignedStudents] =
     useState<string[]>([]);
@@ -88,35 +90,37 @@ const StudentFeeSection = ({
 
   const fetchFeeTransactions = useCallback(async () => {
     try {
+      if (!tenant?.id) return [];
       const { data, error } = await supabase
         .from("Coaching-3_FeeTransactions")
         .select(`
-        *,
-        student_fee:student_fee_id(
-          id,
-          student_id,
-          course_id,
-          batch_id,
-          academic_year,
+    *,
+    student_fee:Coaching-3_StudentFees!fee_transactions_student_fee_tenant_fk(
+      id,
+      student_id,
+      course_id,
+      batch_id,
+      academic_year,
 
-          student:student_id(
-            id,
-            student_id,
-            name
-          ),
+      student:Coaching-3_Students!student_fees_student_tenant_fk(
+        id,
+        student_id,
+        name
+      ),
 
-          course:course_id(
-            id,
-            course_name
-          ),
+      course:Coaching-3_Courses!student_fees_course_tenant_fk(
+        id,
+        course_name
+      ),
 
-          batch:batch_id(
-            id,
-            batch_name,
-            course_id
-          )
-        )
-      `)
+      batch:Coaching-3_StudentBatches!student_fees_batch_tenant_fk(
+        id,
+        batch_name,
+        course_id
+      )
+    )
+  `)
+        .eq("tenant_id", tenant.id)
         .order("created_at", {
           ascending: false,
         });
@@ -129,28 +133,30 @@ const StudentFeeSection = ({
       toast.error(err.message);
       return [];
     }
-  }, []);
+  }, [tenant?.id]);
 
 
   const fetchStudents = useCallback(async () => {
     try {
-      console.log("========== FETCH STUDENTS ==========");
+      if (!tenant?.id) return [];
 
       const { data, error } = await supabase
         .from("Coaching-3_Students")
         .select(`
-        *,
-        course:course_id(
-          id,
-          course_name
-        ),
-        batch:batch_id(
-          id,
-          batch_name,
-          course_id
-        )
-      `)
+    *,
+    course:Coaching-3_Courses!students_course_tenant_fk(
+      id,
+      course_name
+    ),
+    batch:Coaching-3_StudentBatches!students_batch_tenant_fk(
+      id,
+      batch_name,
+      course_id
+    )
+  `)
+        .eq("tenant_id", tenant.id)
         .order("created_at", { ascending: false });
+
 
       if (error) {
         console.error("FETCH STUDENTS ERROR:", error);
@@ -169,15 +175,20 @@ const StudentFeeSection = ({
 
       return [];
     }
-  }, []);
+  }, [tenant?.id]);
 
 
   const fetchFeeStructures = useCallback(async () => {
     try {
+      if (!tenant?.id) {
+        setFeeStructures([]);
+        return;
+      }
       const { data, error } = await supabase
         .from("Coaching-3_FeeStructures")
         .select("*")
         .eq("status", "active")
+        .eq("tenant_id", tenant.id)
         .order("created_at", {
           ascending: false,
         });
@@ -188,19 +199,19 @@ const StudentFeeSection = ({
     } catch (err: any) {
       toast.error(err.message);
     }
-  }, []);
+  }, [tenant?.id]);
 
 
   const fetchStudentFees = useCallback(async () => {
     try {
+      if (!tenant?.id) return [];
       const academicYear = getCurrentAcademicYear();
 
       const { data, error } = await supabase
         .from("Coaching-3_StudentFees")
         .select(`
     *,
-
-    student:student_id(
+    student:Coaching-3_Students!student_fees_student_tenant_fk(
       id,
       student_id,
       name,
@@ -209,31 +220,29 @@ const StudentFeeSection = ({
       class,
       batch_id,
       course_id,
-
-      batch:batch_id(
+      batch:Coaching-3_StudentBatches!students_batch_tenant_fk(
         id,
         batch_name,
         course_id
       )
     ),
-
-    course:course_id(
+    course:Coaching-3_Courses!student_fees_course_tenant_fk(
       id,
       course_name
     ),
-
-    batch:batch_id(
+    batch:Coaching-3_StudentBatches!student_fees_batch_tenant_fk(
       id,
       batch_name,
       course_id
     ),
-
-    fee_structure:fee_structure_id(
+    fee_structure:Coaching-3_FeeStructures!student_fees_structure_tenant_fk(
       *
     )
   `)
         .eq("academic_year", academicYear)
+        .eq("tenant_id", tenant.id)
         .order("created_at", { ascending: false });
+
 
       if (error) throw error;
 
@@ -246,43 +255,45 @@ const StudentFeeSection = ({
 
       return [];
     }
-  }, []);
+  }, [tenant?.id]);
 
 
   const fetchAnalyticsStudentFees = useCallback(async () => {
     try {
+      if (!tenant?.id) return [];
       const { data, error } = await supabase
         .from("Coaching-3_StudentFees")
         .select(`
-        *,
-        student:student_id(
-          id,
-          student_id,
-          name,
-          email,
-          mobile,
-          class,
-          batch_id,
-          course_id,
-          batch:batch_id(
-            id,
-            batch_name,
-            course_id
-          )
-        ),
-        course:course_id(
-          id,
-          course_name
-        ),
-        batch:batch_id(
-          id,
-          batch_name,
-          course_id
-        ),
-        fee_structure:fee_structure_id(
-          *
-        )
-      `)
+    *,
+    student:Coaching-3_Students!student_fees_student_tenant_fk(
+      id,
+      student_id,
+      name,
+      email,
+      mobile,
+      class,
+      batch_id,
+      course_id,
+      batch:Coaching-3_StudentBatches!students_batch_tenant_fk(
+        id,
+        batch_name,
+        course_id
+      )
+    ),
+    course:Coaching-3_Courses!student_fees_course_tenant_fk(
+      id,
+      course_name
+    ),
+    batch:Coaching-3_StudentBatches!student_fees_batch_tenant_fk(
+      id,
+      batch_name,
+      course_id
+    ),
+    fee_structure:Coaching-3_FeeStructures!student_fees_structure_tenant_fk(
+      *
+    )
+  `)
+        .eq("tenant_id", tenant.id)
         .order("created_at", {
           ascending: false,
         });
@@ -297,19 +308,19 @@ const StudentFeeSection = ({
 
       return [];
     }
-  }, []);
+  }, [tenant?.id]);
 
 
   const fetchPreviousDues = useCallback(async () => {
     try {
+      if (!tenant?.id) return [];
       const currentAcademicYear = getCurrentAcademicYear();
 
       const { data, error } = await supabase
         .from("Coaching-3_StudentFees")
         .select(`
     *,
-
-    student:student_id(
+    student:Coaching-3_Students!student_fees_student_tenant_fk(
       id,
       student_id,
       name,
@@ -318,35 +329,31 @@ const StudentFeeSection = ({
       class,
       batch_id,
       course_id,
-
-      batch:batch_id(
+      batch:Coaching-3_StudentBatches!students_batch_tenant_fk(
         id,
         batch_name,
         course_id
       )
     ),
-
-    course:course_id(
+    course:Coaching-3_Courses!student_fees_course_tenant_fk(
       id,
       course_name
     ),
-
-    batch:batch_id(
+    batch:Coaching-3_StudentBatches!student_fees_batch_tenant_fk(
       id,
       batch_name,
       course_id
     ),
-
-    fee_structure:fee_structure_id(
+    fee_structure:Coaching-3_FeeStructures!student_fees_structure_tenant_fk(
       *
     )
   `)
         .neq("academic_year", currentAcademicYear)
+        .eq("tenant_id", tenant.id)
         .gt("remaining_amount", 0)
         .order("academic_year", {
           ascending: false,
         });
-
       if (error) throw error;
 
       return data || [];
@@ -357,10 +364,24 @@ const StudentFeeSection = ({
 
       return [];
     }
-  }, []);
+  }, [tenant?.id]);
 
 
   const refreshData = useCallback(async () => {
+    if (tenantLoading) return;
+
+    if (!tenant?.id) {
+      setStudentFees([]);
+      setFeeTransactions([]);
+      setFeeStructures([]);
+      setStudents([]);
+      setPreviousDues([]);
+      setAnalyticsStudentFees([]);
+      setSelectedFee(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -368,38 +389,34 @@ const StudentFeeSection = ({
         latestFees,
         latestAnalyticsFees,
         latestTransactions,
-        latestFeeStructures,
         latestStudents,
         latestPreviousDues,
       ] = await Promise.all([
         fetchStudentFees(),
         fetchAnalyticsStudentFees(),
         fetchFeeTransactions(),
-        fetchFeeStructures(),
         fetchStudents(),
         fetchPreviousDues(),
       ]);
 
-      // Update main data
       setStudentFees(latestFees || []);
       setFeeTransactions(latestTransactions || []);
-      setFeeStructures(latestFeeStructures || []);
       setStudents(latestStudents || []);
       setPreviousDues(latestPreviousDues || []);
-      setAnalyticsStudentFees(
-        latestAnalyticsFees || []
-      );
+      setAnalyticsStudentFees(latestAnalyticsFees || []);
+
 
       // Agar drawer open hai to selected fee bhi update karo
-      if (selectedFee) {
+      setSelectedFee((currentSelectedFee) => {
+        if (!currentSelectedFee) return null;
+
         const updatedFee = (latestFees || []).find(
-          (fee) => fee.id === selectedFee.id
+          (fee) => fee.id === currentSelectedFee.id
         );
 
-        if (updatedFee) {
-          setSelectedFee(updatedFee);
-        }
-      }
+        return updatedFee ?? currentSelectedFee;
+      });
+
     } catch (error: any) {
       console.error("Fees refresh error:", error);
 
@@ -410,6 +427,8 @@ const StudentFeeSection = ({
       setLoading(false);
     }
   }, [
+    tenant?.id,
+    tenantLoading,
     fetchStudentFees,
     fetchFeeTransactions,
     fetchFeeStructures,
@@ -448,6 +467,10 @@ const StudentFeeSection = ({
   const handleSaveFee = async (
     updatedFee: StudentFeeData
   ) => {
+    if (!tenant?.id) {
+      toast.error("Unable to update fee: tenant is not available.");
+      return;
+    }
     try {
       const { error } = await supabase
         .from("Coaching-3_StudentFees")
@@ -462,7 +485,8 @@ const StudentFeeSection = ({
           status: updatedFee.status,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", updatedFee.id);
+        .eq("id", updatedFee.id)
+        .eq("tenant_id", tenant.id);
 
       if (error) throw error;
       replaceStudentFee(updatedFee);
@@ -1516,6 +1540,10 @@ const StudentFeeSection = ({
   const handleRecentTransactionPrint = async (
     transaction: FeeTransaction
   ) => {
+    if (!tenant?.id) {
+      toast.error("Unable to load receipt: tenant is not available.");
+      return;
+    }
     try {
       if (!transaction.student_fee_id) {
         toast.error("Fee record not found for this transaction.");
@@ -1528,7 +1556,7 @@ const StudentFeeSection = ({
         .select(`
     *,
 
-    student:student_id(
+    student:Coaching-3_Students!student_fees_student_tenant_fk(
       id,
       student_id,
       name,
@@ -1537,22 +1565,23 @@ const StudentFeeSection = ({
       class
     ),
 
-    course:course_id(
+    course:Coaching-3_Courses!student_fees_course_tenant_fk(
       id,
       course_name
     ),
 
-    batch:batch_id(
+    batch:Coaching-3_StudentBatches!student_fees_batch_tenant_fk(
       id,
       batch_name,
       course_id
     ),
 
-    fee_structure:fee_structure_id(
+    fee_structure:Coaching-3_FeeStructures!student_fees_structure_tenant_fk(
       *
     )
   `)
         .eq("id", transaction.student_fee_id)
+        .eq("tenant_id", tenant.id)
         .single();
 
       if (error) {

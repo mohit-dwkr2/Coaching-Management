@@ -1,6 +1,7 @@
 import { CheckCircle2, Layers, Users, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/supabaseClient";
 import { updateBatchStudentCount } from "@/utils/batchUtils";
 import { toast } from "sonner";
@@ -19,47 +20,71 @@ export default function BulkAssignBatchDrawer({
   students,
   onAssigned,
 }: BulkAssignBatchDrawerProps) {
-  if (!isOpen) return null;
+  const { tenant } = useTenant();
 
   const [batches, setBatches] = useState<any[]>([]);
   const [selectedBatch, setSelectedBatch] = useState("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAssigning, setIsAssigning] = useState<boolean>(false);
 
-  const fetchBatches = async () => {
-    setIsLoading(true);
-    if (students.length === 0) {
+  const courseId = students[0]?.course_id;
+
+  const fetchBatches = useCallback(async () => {
+    if (!tenant?.id || !courseId) {
       setBatches([]);
       setIsLoading(false);
       return;
     }
 
-    const courseId = students[0].course_id;
+    setIsLoading(true);
 
     const { data, error } = await supabase
       .from("Coaching-3_StudentBatches")
       .select("*")
+      .eq("tenant_id", tenant.id)
       .eq("course_id", courseId)
       .eq("status", "active")
       .order("batch_name");
 
-    if (!error && data) {
-      setBatches(data);
+    if (error) {
+      console.error("Failed to load batches:", error);
+      setBatches([]);
+      toast.error("Failed to load batches.");
+    } else {
+      setBatches(data ?? []);
     }
+
     setIsLoading(false);
-  };
+  }, [tenant?.id, courseId]);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchBatches();
-      setSelectedBatch("");
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
 
-  
+    setSelectedBatch("");
+    void fetchBatches();
+  }, [isOpen, fetchBatches]);
+
+  if (!isOpen) return null;
+
+
   const assignBulkBatch = async () => {
+    if (!tenant?.id) {
+      toast.error("Tenant information is missing.");
+      return;
+    }
+
+    if (!students.length) {
+      toast.error("No students selected.");
+      return;
+    }
+
     if (!selectedBatch) {
       toast.error("Please select a batch.");
+      return;
+    }
+
+    if (students.some((student) => student.course_id !== courseId)) {
+      toast.error("Select students from the same course.");
       return;
     }
 
@@ -73,6 +98,7 @@ export default function BulkAssignBatchDrawer({
       ),
     ];
 
+
     try {
       const selected = batches.find(
         (batch) => batch.id === selectedBatch
@@ -84,7 +110,10 @@ export default function BulkAssignBatchDrawer({
         return;
       }
 
-      let highestRoll = await getHighestRollNumber(selectedBatch);
+      let highestRoll = await getHighestRollNumber(
+        selectedBatch,
+        tenant.id
+      );
 
       for (const student of students) {
         let rollNumber = student.roll_number;
@@ -102,23 +131,24 @@ export default function BulkAssignBatchDrawer({
             roll_number: rollNumber,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", student.id);
+          .eq("id", student.id)
+          .eq("tenant_id", tenant.id);
 
         if (error) throw error;
       }
 
       for (const batchId of oldBatchIds) {
-        await updateBatchStudentCount(batchId);
+        await updateBatchStudentCount(batchId, tenant.id);
       }
 
-      await updateBatchStudentCount(selectedBatch);
-
+      await updateBatchStudentCount(selectedBatch, tenant.id);
       toast.success("Students assigned successfully.");
 
       onAssigned();
       onClose();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      console.error("Failed to assign students to batch:", err);
+      toast.error("Failed to assign students to batch.");
     } finally {
       setIsAssigning(false);
     }
@@ -134,7 +164,7 @@ export default function BulkAssignBatchDrawer({
 
       {/* Drawer Panel */}
       <div className="fixed top-0 right-0 h-full w-full sm:w-[500px] bg-slate-50 z-[70] shadow-2xl flex flex-col border-l border-slate-200 transition-transform duration-300 ease-in-out">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 bg-white border-b border-slate-200/80 shrink-0">
           <div className="flex items-center gap-3">
@@ -168,7 +198,7 @@ export default function BulkAssignBatchDrawer({
 
         {/* Body Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
-          
+
           {/* Target Summary Card */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3">

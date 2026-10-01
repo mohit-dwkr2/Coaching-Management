@@ -1,208 +1,173 @@
 import { serve } from "std/http/server";
-
 import { createClient } from "@supabase/supabase-js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    // ✅ Handle CORS
-    if (req.method === "OPTIONS") {
-      return new Response("ok", {
-        headers: corsHeaders,
-      });
+    if (!supabaseUrl || !serviceRoleKey) {
+      return jsonResponse({ error: "Server configuration error" }, 500);
     }
 
-    // ✅ Create Supabase Admin Client
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // ✅ Get auth token
-    const authHeader =
-      req.headers.get("Authorization");
-
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({
-          error: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: corsHeaders,
-        }
-      );
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const token =
-      authHeader.replace("Bearer ", "");
+    const token = authHeader.slice("Bearer ".length);
 
-    // ✅ Verify logged-in user
     const {
       data: { user },
       error: userError,
-    } =
-      await supabaseAdmin.auth.getUser(
-        token
-      );
+    } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
-      return new Response(
-        JSON.stringify({
-          error: "Invalid user",
-        }),
-        {
-          status: 401,
-          headers: corsHeaders,
-        }
+      return jsonResponse({ error: "Invalid user" }, 401);
+    }
+
+    const body = await req.json();
+    const adminId = body.adminId;
+    const tenantId = body.tenantId;
+
+    if (!adminId || !tenantId) {
+      return jsonResponse(
+        { error: "adminId and tenantId are required" },
+        400
       );
     }
 
-    // ✅ Verify owner
-    const { data: ownerData } =
-      await supabaseAdmin
-        .from("Coaching-3_Admins")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("role", "owner")
-        .maybeSingle();
+    // Only an owner of THIS tenant may delete its admins.
+    const { data: membership, error: membershipError } = await supabaseAdmin
+      .from("Coaching-3_TenantAdmins")
+      .select("role")
+      .eq("tenant_id", tenantId)
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    if (!ownerData) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "Only owner can delete admins",
-        }),
-        {
-          status: 403,
-          headers: corsHeaders,
-        }
+    if (
+      membershipError ||
+      !membership ||
+      membership.role !== "owner"
+    ) {
+      return jsonResponse(
+        { error: "Only this tenant's owner can delete admins" },
+        403
       );
     }
 
-    // ✅ Get admin id
-    const { adminId } =
-      await req.json();
+    // Find the target profile only within the supplied tenant.
+    const { data: adminData, error: adminError } = await supabaseAdmin
+      .from("Coaching-3_Admins")
+      .select("id, user_id, role")
+      .eq("id", adminId)
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
 
-    if (!adminId) {
-      return new Response(
-        JSON.stringify({
-          error: "Admin ID required",
-        }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
-      );
+    if (adminError) {
+      return jsonResponse({ error: "Could not look up admin" }, 500);
     }
-
-    // ✅ Find admin
-    const { data: adminData } =
-      await supabaseAdmin
-        .from("Coaching-3_Admins")
-        .select("*")
-        .eq("id", adminId)
-        .maybeSingle();
 
     if (!adminData) {
-      return new Response(
-        JSON.stringify({
-          error: "Admin not found",
-        }),
-        {
-          status: 404,
-          headers: corsHeaders,
-        }
-      );
+      return jsonResponse({ error: "Admin not found in this tenant" }, 404);
     }
 
-    // ❌ Prevent deleting owner
     if (adminData.role === "owner") {
-      return new Response(
-        JSON.stringify({
-          error:
-            "Owner cannot be deleted",
-        }),
-        {
-          status: 403,
-          headers: corsHeaders,
-        }
+      return jsonResponse({ error: "Owner cannot be deleted" }, 403);
+    }
+
+    // Remove only this tenant membership.
+    const { error: membershipDeleteError } = await supabaseAdmin
+      .from("Coaching-3_TenantAdmins")
+      .delete()
+      .eq("tenant_id", tenantId)
+      .eq("user_id", adminData.user_id);
+
+    if (membershipDeleteError) {
+      return jsonResponse(
+        { error: membershipDeleteError.message },
+        500
       );
     }
 
-    // ✅ Delete auth user
-    const { error: deleteAuthError } =
-      await supabaseAdmin.auth.admin.deleteUser(
-        adminData.user_id
-      );
+    // Remove only this tenant's admin profile.
+    const { error: profileDeleteError } = await supabaseAdmin
+      .from("Coaching-3_Admins")
+      .delete()
+      .eq("id", adminId)
+      .eq("tenant_id", tenantId);
 
-    if (deleteAuthError) {
-      return new Response(
-        JSON.stringify({
-          error:
-            deleteAuthError.message,
-        }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
+    if (profileDeleteError) {
+      return jsonResponse(
+        { error: profileDeleteError.message },
+        500
       );
     }
 
-    // ✅ Delete admin row
-    const { error: deleteRowError } =
-      await supabaseAdmin
-        .from("Coaching-3_Admins")
-        .delete()
-        .eq("id", adminId);
+    // Check whether this user belongs to any other coaching.
+    const {
+      data: remainingMemberships,
+      error: remainingMembershipsError,
+    } = await supabaseAdmin
+      .from("Coaching-3_TenantAdmins")
+      .select("tenant_id")
+      .eq("user_id", adminData.user_id);
 
-    if (deleteRowError) {
-      return new Response(
-        JSON.stringify({
-          error:
-            deleteRowError.message,
-        }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
+    if (remainingMembershipsError) {
+      return jsonResponse(
+        { error: remainingMembershipsError.message },
+        500
       );
     }
 
-    // ✅ Success
-    return new Response(
-      JSON.stringify({
-        success: true,
-      }),
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          "Content-Type":
-            "application/json",
-        },
+    // If the user has no remaining coaching membership,
+    // remove the Supabase Auth user as well.
+    if (!remainingMemberships || remainingMemberships.length === 0) {
+      const { error: authDeleteError } =
+        await supabaseAdmin.auth.admin.deleteUser(adminData.user_id);
+
+      if (authDeleteError) {
+        return jsonResponse(
+          { error: authDeleteError.message },
+          500
+        );
       }
-    );
-
-  }catch (error) {
-
-  return new Response(
-    JSON.stringify({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Unknown error",
-    }),
-    {
-      status: 500,
-      headers: corsHeaders,
     }
-  );
-}
+
+    return jsonResponse({ success: true });
+  } catch (error) {
+    return jsonResponse(
+      {
+        error:
+          error instanceof Error ? error.message : "Unknown error",
+      },
+      500
+    );
+  }
 });

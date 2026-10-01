@@ -13,21 +13,23 @@ import About from "./pages/About";
 import UserLogin from "./pages/UserLogin";
 import Dashboard from "./pages/Dashboard";
 import SetPassword from "./pages/SetPassword";
+import { TenantProvider } from "@/contexts/TenantContext";
+
 const queryClient = new QueryClient();
 
 // 🔥 Scroll Logic: Ye function hash (#) dekh kar sahi jagah scroll karega
 function ScrollToHash() {
   // 1. 'key' ko bhi nikaal lein
-  const { hash, pathname, key } = useLocation(); 
+  const { hash, pathname, key } = useLocation();
 
   useEffect(() => {
     if (hash) {
       const id = hash.replace("#", "");
-      
+
       let count = 0;
       const checkAndScroll = setInterval(() => {
         const element = document.getElementById(id);
-        
+
         if (element) {
           // Element mil gaya!
           const offset = 80; // Mobile/Desktop navbar ke liye 80px ka gap rakhein
@@ -40,7 +42,7 @@ function ScrollToHash() {
             top: offsetPosition,
             behavior: "smooth"
           });
-          
+
           clearInterval(checkAndScroll);
         }
 
@@ -53,9 +55,9 @@ function ScrollToHash() {
       // Agar home page par click kiya (bina hash ke), toh top par jaye
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-    
+
     // 🔥 KEY ADD KIYA: Ab har click par ye useEffect dobara chalega!
-  }, [hash, pathname, key]); 
+  }, [hash, pathname, key]);
 
   return null;
 }
@@ -63,30 +65,30 @@ function ScrollToHash() {
 function LayoutContent() {
   const location = useLocation();
   const isAdminPage = location.pathname.startsWith("/admin") || location.pathname === "/admin-login" ||
-  location.pathname === "/dashboard";
+    location.pathname === "/dashboard";
 
   return (
     <>
       <ScrollToHash /> {/* 🔥 Ise yahan add kiya */}
 
-    {!isAdminPage && (
+      {!isAdminPage && (
         <>
-          
+
           <Navbar />
         </>
       )}
 
-<div>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/userlogin" element={<UserLogin />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/set-password" element={<SetPassword />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <div>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/userlogin" element={<UserLogin />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/set-password" element={<SetPassword />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </div>
     </>
   );
@@ -97,9 +99,13 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+
       <BrowserRouter>
-        <LayoutContent />
+        <TenantProvider>
+          <LayoutContent />
+        </TenantProvider>
       </BrowserRouter>
+
     </TooltipProvider>
   </QueryClientProvider>
 );

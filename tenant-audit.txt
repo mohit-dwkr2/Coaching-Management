@@ -1,0 +1,520 @@
+﻿PROJECT FILES SCANNED: 137
+FILES WITH POSSIBLE BACKEND REFERENCES: 55
+
+=== MATCHES (file:line: code) ===
+src\components\admin\attendance\services\attendanceService.ts:1: import { supabase } from "@/supabaseClient";
+src\components\admin\attendance\AttendanceDrawer.tsx:3: import { supabase } from "@/supabaseClient";
+src\components\admin\attendance\AttendanceDrawer.tsx:92: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceDrawer.tsx:93: .from("Coaching-3_Courses")
+src\components\admin\attendance\AttendanceDrawer.tsx:110: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceDrawer.tsx:111: .from("Coaching-3_StudentBatches")
+src\components\admin\attendance\AttendanceDrawer.tsx:148: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceDrawer.tsx:149: .from("Coaching-3_Students")
+src\components\admin\attendance\AttendanceDrawer.tsx:187: const { data: records, error } = await supabase
+src\components\admin\attendance\AttendanceDrawer.tsx:188: .from("Coaching-3_AttendanceRecords")
+src\components\admin\attendance\AttendanceDrawer.tsx:223: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceDrawer.tsx:224: .from("Coaching-3_AttendanceSessions")
+src\components\admin\attendance\AttendanceDrawer.tsx:345: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceDrawer.tsx:346: .from("Coaching-3_AttendanceSessions")
+src\components\admin\attendance\AttendanceDrawer.tsx:390: const { error } = await supabase
+src\components\admin\attendance\AttendanceDrawer.tsx:391: .from("Coaching-3_AttendanceRecords")
+src\components\admin\attendance\AttendanceDrawer.tsx:417: const { error: sessionError } = await supabase
+src\components\admin\attendance\AttendanceDrawer.tsx:418: .from("Coaching-3_AttendanceSessions")
+src\components\admin\attendance\AttendanceFilters.tsx:2: import { supabase } from "@/supabaseClient";
+src\components\admin\attendance\AttendanceManager.tsx:2: import { supabase } from "@/supabaseClient";
+src\components\admin\attendance\AttendanceManager.tsx:52: supabase
+src\components\admin\attendance\AttendanceManager.tsx:53: .from("Coaching-3_Courses")
+src\components\admin\attendance\AttendanceManager.tsx:57: supabase
+src\components\admin\attendance\AttendanceManager.tsx:58: .from("Coaching-3_StudentBatches")
+src\components\admin\attendance\AttendanceManager.tsx:63: supabase
+src\components\admin\attendance\AttendanceManager.tsx:64: .from("Coaching-3_Students")
+src\components\admin\attendance\AttendanceManager.tsx:145: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:146: .from("Coaching-3_AttendanceSessions")
+src\components\admin\attendance\AttendanceManager.tsx:202: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:203: .from("Coaching-3_AttendanceSessions")
+src\components\admin\attendance\AttendanceManager.tsx:253: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:254: .from("Coaching-3_AttendanceSessions")
+src\components\admin\attendance\AttendanceManager.tsx:312: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:313: .from("Coaching-3_AttendanceRecords")
+src\components\admin\attendance\AttendanceManager.tsx:432: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:433: .from("Coaching-3_AttendanceRecords")
+src\components\admin\attendance\AttendanceManager.tsx:537: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:538: .from("Coaching-3_AttendanceRecords")
+src\components\admin\attendance\AttendanceManager.tsx:692: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:693: .from("Coaching-3_AttendanceSessions")
+src\components\admin\attendance\AttendanceManager.tsx:758: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:759: .from("Coaching-3_AttendanceSessions")
+src\components\admin\attendance\AttendanceManager.tsx:854: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:855: .from("Coaching-3_AttendanceSessions")
+src\components\admin\attendance\AttendanceManager.tsx:949: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:950: .from("Coaching-3_AttendanceRecords")
+src\components\admin\attendance\AttendanceManager.tsx:1050: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:1051: .from("Coaching-3_AttendanceRecords")
+src\components\admin\attendance\AttendanceManager.tsx:1147: const { data, error } = await supabase
+src\components\admin\attendance\AttendanceManager.tsx:1148: .from("Coaching-3_AttendanceRecords")
+src\components\admin\attendance\AttendanceTable.tsx:2: import { supabase } from "@/supabaseClient";
+src\components\admin\attendance\AttendanceTable.tsx:87: let query = supabase
+src\components\admin\attendance\AttendanceTable.tsx:88: .from("Coaching-3_AttendanceSessions")
+src\components\admin\attendance\AttendanceTable.tsx:158: const { error } = await supabase
+src\components\admin\attendance\AttendanceTable.tsx:159: .from("Coaching-3_AttendanceSessions")
+src\components\admin\batch\BatchDrawer.tsx:5: import { supabase } from "@/supabaseClient";
+src\components\admin\batch\BatchDrawer.tsx:31: const { data } = await supabase
+src\components\admin\batch\BatchDrawer.tsx:32: .from("Coaching-3_Courses")
+src\components\admin\batch\BatchDrawer.tsx:148: const { error } = await supabase
+src\components\admin\batch\BatchDrawer.tsx:149: .from("Coaching-3_StudentBatches")
+src\components\admin\batch\BatchDrawer.tsx:170: const { error } = await supabase
+src\components\admin\batch\BatchDrawer.tsx:171: .from("Coaching-3_StudentBatches")
+src\components\admin\batch\BatchDrawer.tsx:350: {Array.from({ length: 12 }, (_, i) => (
+src\components\admin\batch\BatchDrawer.tsx:367: {Array.from({ length: 60 }, (_, i) => {
+src\components\admin\batch\BatchDrawer.tsx:409: {Array.from({ length: 12 }, (_, i) => (
+src\components\admin\batch\BatchDrawer.tsx:426: {Array.from({ length: 60 }, (_, i) => {
+src\components\admin\batch\BatchManager.tsx:2: import { supabase } from "@/supabaseClient";
+src\components\admin\batch\BatchManager.tsx:17: const { data, error } = await supabase
+src\components\admin\batch\BatchManager.tsx:18: .from("Coaching-3_Courses")
+src\components\admin\batch\BatchManager.tsx:32: const { count: totalBatches } = await supabase
+src\components\admin\batch\BatchManager.tsx:33: .from("Coaching-3_StudentBatches")
+src\components\admin\batch\BatchManager.tsx:37: const { count: activeBatches } = await supabase
+src\components\admin\batch\BatchManager.tsx:38: .from("Coaching-3_StudentBatches")
+src\components\admin\batch\BatchManager.tsx:43: const { count: assignedStudents } = await supabase
+src\components\admin\batch\BatchManager.tsx:44: .from("Coaching-3_Students")
+src\components\admin\batch\BatchManager.tsx:51: const { count: unassignedStudents } = await supabase
+src\components\admin\batch\BatchManager.tsx:52: .from("Coaching-3_Students")
+src\components\admin\batch\BatchSection.tsx:2: import { supabase } from "@/supabaseClient";
+src\components\admin\batch\BatchSection.tsx:25: const { data: batches, error } = await supabase
+src\components\admin\batch\BatchSection.tsx:26: .from("Coaching-3_StudentBatches")
+src\components\admin\batch\BatchSection.tsx:39: const { data: students } = await supabase
+src\components\admin\batch\BatchSection.tsx:40: .from("Coaching-3_Students")
+src\components\admin\batch\BatchSection.tsx:86: const { error } = await supabase
+src\components\admin\batch\BatchSection.tsx:87: .from("Coaching-3_StudentBatches")
+src\components\admin\batch\CourseDrawer.tsx:5: import { supabase } from "@/supabaseClient";
+src\components\admin\batch\CourseDrawer.tsx:39: const { error } = await supabase
+src\components\admin\batch\CourseDrawer.tsx:40: .from("Coaching-3_Courses")
+src\components\admin\batch\CourseDrawer.tsx:56: const { error } = await supabase
+src\components\admin\batch\CourseDrawer.tsx:57: .from("Coaching-3_Courses")
+src\components\admin\batch\CourseSection.tsx:3: import { supabase } from "@/supabaseClient";
+src\components\admin\batch\CourseSection.tsx:26: const { data: courses, error: courseError } = await supabase
+src\components\admin\batch\CourseSection.tsx:27: .from("Coaching-3_Courses")
+src\components\admin\batch\CourseSection.tsx:34: const { data: batches } = await supabase
+src\components\admin\batch\CourseSection.tsx:35: .from("Coaching-3_StudentBatches")
+src\components\admin\batch\CourseSection.tsx:39: const { data: students } = await supabase
+src\components\admin\batch\CourseSection.tsx:40: .from("Coaching-3_Students")
+src\components\admin\batch\CourseSection.tsx:98: const { error } = await supabase
+src\components\admin\batch\CourseSection.tsx:99: .from("Coaching-3_Courses")
+src\components\admin\fees\analytics\FeeAnalyticsDashboard.tsx:61: return Array.from(new Set(years)).sort((a, b) =>
+src\components\admin\fees\analytics\FeeAnalyticsDashboard.tsx:86: return Array.from(map.entries()).map(
+src\components\admin\fees\analytics\FeeAnalyticsDashboard.tsx:125: return Array.from(map.values());
+src\components\admin\fees\history\paymentHistoryService.ts:1: import { supabase } from "@/supabaseClient";
+src\components\admin\fees\history\paymentHistoryService.ts:8: const { data, error } = await supabase
+src\components\admin\fees\history\paymentHistoryService.ts:9: .from("Coaching-3_FeeTransactions")
+src\components\admin\fees\services\paymentService.ts:1: import { supabase } from "@/supabaseClient";
+src\components\admin\fees\services\paymentService.ts:149: await supabase.rpc(
+src\components\admin\fees\AssignFeeDrawer.tsx:2: import { supabase } from "@/supabaseClient";
+src\components\admin\fees\AssignFeeDrawer.tsx:68: const { data, error } = await supabase
+src\components\admin\fees\AssignFeeDrawer.tsx:69: .from("Coaching-3_FeeStructures")
+src\components\admin\fees\AssignFeeDrawer.tsx:108: const { data, error } = await supabase
+src\components\admin\fees\AssignFeeDrawer.tsx:109: .from("Coaching-3_StudentFees")
+src\components\admin\fees\AssignFeeDrawer.tsx:156: const { data: existingFee } = await supabase
+src\components\admin\fees\AssignFeeDrawer.tsx:157: .from("Coaching-3_StudentFees")
+src\components\admin\fees\AssignFeeDrawer.tsx:170: const { error } = await supabase
+src\components\admin\fees\AssignFeeDrawer.tsx:171: .from("Coaching-3_StudentFees")
+src\components\admin\fees\BulkAssignFeeDrawer.tsx:2: import { supabase } from "@/supabaseClient";
+src\components\admin\fees\BulkAssignFeeDrawer.tsx:97: const { data, error } = await supabase
+src\components\admin\fees\BulkAssignFeeDrawer.tsx:98: .from("Coaching-3_FeeStructures")
+src\components\admin\fees\BulkAssignFeeDrawer.tsx:188: await supabase
+src\components\admin\fees\BulkAssignFeeDrawer.tsx:189: .from("Coaching-3_StudentFees")
+src\components\admin\fees\BulkAssignFeeDrawer.tsx:283: await supabase
+src\components\admin\fees\BulkAssignFeeDrawer.tsx:284: .from("Coaching-3_StudentFees")
+src\components\admin\fees\ChangeFeeStructureDialog.tsx:2: import { supabase } from "@/supabaseClient";
+src\components\admin\fees\ChangeFeeStructureDialog.tsx:77: const { data, error } = await supabase
+src\components\admin\fees\ChangeFeeStructureDialog.tsx:78: .from("Coaching-3_FeeStructures")
+src\components\admin\fees\FeeStructureSection.tsx:2: import { supabase } from "@/supabaseClient";
+src\components\admin\fees\FeeStructureSection.tsx:40: const { data, error } = await supabase
+src\components\admin\fees\FeeStructureSection.tsx:41: .from("Coaching-3_Courses")
+src\components\admin\fees\FeeStructureSection.tsx:57: const { data, error } = await supabase
+src\components\admin\fees\FeeStructureSection.tsx:58: .from("Coaching-3_FeeStructures")
+src\components\admin\fees\FeeStructureSection.tsx:72: const { data: studentFees, error: studentFeesError } = await supabase
+src\components\admin\fees\FeeStructureSection.tsx:73: .from("Coaching-3_StudentFees")
+src\components\admin\fees\FeeStructureSection.tsx:131: const { error } = await supabase
+src\components\admin\fees\FeeStructureSection.tsx:132: .from("Coaching-3_FeeStructures")
+src\components\admin\fees\FeeStructureSection.tsx:167: const { error } = await supabase
+src\components\admin\fees\FeeStructureSection.tsx:168: .from("Coaching-3_FeeStructures")
+src\components\admin\fees\FeeStructureSection.tsx:214: const { error } = await supabase
+src\components\admin\fees\FeeStructureSection.tsx:215: .from("Coaching-3_FeeStructures")
+src\components\admin\fees\FeeStructureSection.tsx:231: const { error } = await supabase
+src\components\admin\fees\FeeStructureSection.tsx:232: .from("Coaching-3_FeeStructures")
+src\components\admin\fees\StudentFeeSection.tsx:8: import { supabase } from "@/supabaseClient";
+src\components\admin\fees\StudentFeeSection.tsx:91: const { data, error } = await supabase
+src\components\admin\fees\StudentFeeSection.tsx:92: .from("Coaching-3_FeeTransactions")
+src\components\admin\fees\StudentFeeSection.tsx:139: const { data, error } = await supabase
+src\components\admin\fees\StudentFeeSection.tsx:140: .from("Coaching-3_Students")
+src\components\admin\fees\StudentFeeSection.tsx:177: const { data, error } = await supabase
+src\components\admin\fees\StudentFeeSection.tsx:178: .from("Coaching-3_FeeStructures")
+src\components\admin\fees\StudentFeeSection.tsx:198: const { data, error } = await supabase
+src\components\admin\fees\StudentFeeSection.tsx:199: .from("Coaching-3_StudentFees")
+src\components\admin\fees\StudentFeeSection.tsx:254: const { data, error } = await supabase
+src\components\admin\fees\StudentFeeSection.tsx:255: .from("Coaching-3_StudentFees")
+src\components\admin\fees\StudentFeeSection.tsx:307: const { data, error } = await supabase
+src\components\admin\fees\StudentFeeSection.tsx:308: .from("Coaching-3_StudentFees")
+src\components\admin\fees\StudentFeeSection.tsx:452: const { error } = await supabase
+src\components\admin\fees\StudentFeeSection.tsx:453: .from("Coaching-3_StudentFees")
+src\components\admin\fees\StudentFeeSection.tsx:1526: const { data: fee, error } = await supabase
+src\components\admin\fees\StudentFeeSection.tsx:1527: .from("Coaching-3_StudentFees")
+src\components\admin\student\AssignBatchDrawer.tsx:4: import { supabase } from "@/supabaseClient";
+src\components\admin\student\AssignBatchDrawer.tsx:31: const { data, error } = await supabase
+src\components\admin\student\AssignBatchDrawer.tsx:32: .from("Coaching-3_StudentBatches")
+src\components\admin\student\AssignBatchDrawer.tsx:69: const { error } = await supabase
+src\components\admin\student\AssignBatchDrawer.tsx:70: .from("Coaching-3_Students")
+src\components\admin\student\BulkAssignBatchDrawer.tsx:4: import { supabase } from "@/supabaseClient";
+src\components\admin\student\BulkAssignBatchDrawer.tsx:39: const { data, error } = await supabase
+src\components\admin\student\BulkAssignBatchDrawer.tsx:40: .from("Coaching-3_StudentBatches")
+src\components\admin\student\BulkAssignBatchDrawer.tsx:97: const { error } = await supabase
+src\components\admin\student\BulkAssignBatchDrawer.tsx:98: .from("Coaching-3_Students")
+src\components\admin\student\BulkChangeCourseDrawer.tsx:4: import { supabase } from "@/supabaseClient";
+src\components\admin\student\BulkChangeCourseDrawer.tsx:46: const { data, error } = await supabase
+src\components\admin\student\BulkChangeCourseDrawer.tsx:47: .from("Coaching-3_Courses")
+src\components\admin\student\BulkChangeCourseDrawer.tsx:95: const { data: feeRecords, error: feeError } = await supabase
+src\components\admin\student\BulkChangeCourseDrawer.tsx:96: .from("Coaching-3_StudentFees")
+src\components\admin\student\BulkChangeCourseDrawer.tsx:122: } = await supabase
+src\components\admin\student\BulkChangeCourseDrawer.tsx:123: .from("Coaching-3_AttendanceRecords")
+src\components\admin\student\BulkChangeCourseDrawer.tsx:218: const { error: deleteFeeError } = await supabase
+src\components\admin\student\BulkChangeCourseDrawer.tsx:219: .from("Coaching-3_StudentFees")
+src\components\admin\student\BulkChangeCourseDrawer.tsx:248: const { error: studentError } = await supabase
+src\components\admin\student\BulkChangeCourseDrawer.tsx:249: .from("Coaching-3_Students")
+src\components\admin\student\BulkChangeCourseDrawer.tsx:270: const { error: approvalError } = await supabase
+src\components\admin\student\BulkChangeCourseDrawer.tsx:271: .from("Coaching-3_StudentApprovals")
+src\components\admin\student\ManualAdmissionDrawer.tsx:3: import { supabase } from "@/supabaseClient";
+src\components\admin\student\ManualAdmissionDrawer.tsx:37: const { data, error } = await supabase
+src\components\admin\student\ManualAdmissionDrawer.tsx:38: .from("Coaching-3_Courses")
+src\components\admin\student\ManualAdmissionDrawer.tsx:70: const { data, error } = await supabase
+src\components\admin\student\ManualAdmissionDrawer.tsx:71: .from("Coaching-3_StudentBatches")
+src\components\admin\student\ManualAdmissionDrawer.tsx:126: const { data: mobileExists } = await supabase
+src\components\admin\student\ManualAdmissionDrawer.tsx:127: .from("Coaching-3_Students")
+src\components\admin\student\ManualAdmissionDrawer.tsx:141: const { data: emailExists } = await supabase
+src\components\admin\student\ManualAdmissionDrawer.tsx:142: .from("Coaching-3_Students")
+src\components\admin\student\ManualAdmissionDrawer.tsx:169: const { error } = await supabase
+src\components\admin\student\ManualAdmissionDrawer.tsx:170: .from("Coaching-3_Students")
+src\components\admin\student\StudentDrawer.tsx:3: import { supabase } from "@/supabaseClient";
+src\components\admin\student\StudentDrawer.tsx:78: const { data } = await supabase
+src\components\admin\student\StudentDrawer.tsx:79: .from("Coaching-3_Courses")
+src\components\admin\student\StudentDrawer.tsx:140: } = await supabase
+src\components\admin\student\StudentDrawer.tsx:141: .from("Coaching-3_AttendanceRecords")
+src\components\admin\student\StudentDrawer.tsx:187: const { data: fee, error: feeError } = await supabase
+src\components\admin\student\StudentDrawer.tsx:188: .from("Coaching-3_StudentFees")
+src\components\admin\student\StudentDrawer.tsx:234: const { error: deleteFeeError } = await supabase
+src\components\admin\student\StudentDrawer.tsx:235: .from("Coaching-3_StudentFees")
+src\components\admin\student\StudentDrawer.tsx:273: const { error: studentError } = await supabase
+src\components\admin\student\StudentDrawer.tsx:274: .from("Coaching-3_Students")
+src\components\admin\student\StudentDrawer.tsx:286: const { error: approvalError } = await supabase
+src\components\admin\student\StudentDrawer.tsx:287: .from("Coaching-3_StudentApprovals")
+src\components\admin\BatchManager.tsx:5: import { supabase } from "@/supabaseClient";
+src\components\admin\BatchManager.tsx:15: const { data, error } = await supabase
+src\components\admin\BatchManager.tsx:16: .from("Coaching-3_Batches")
+src\components\admin\BatchManager.tsx:39: const { error } = await supabase
+src\components\admin\BatchManager.tsx:40: .from("Coaching-3_Batches")
+src\components\admin\BatchManager.tsx:46: await supabase.from("Coaching-3_Batches").insert([batchData]);
+src\components\admin\BatchManager.tsx:69: const { error } = await supabase.from("Coaching-3_Batches").delete().eq("id", id);
+src\components\admin\facultyManager.tsx:7: import { supabase } from "@/supabaseClient"; // Supabase client check kar lein
+src\components\admin\facultyManager.tsx:25: const { data } = await supabase.from("Coaching-3_Faculty").select("*").order("created_at", { ascending: false });
+src\components\admin\facultyManager.tsx:45: const { error: uploadError } = await supabase.storage
+src\components\admin\facultyManager.tsx:46: .from('coaching-3_data')
+src\components\admin\facultyManager.tsx:58: await supabase.storage
+src\components\admin\facultyManager.tsx:59: .from("coaching-3_data")
+src\components\admin\facultyManager.tsx:65: const { data } = supabase.storage.from('coaching-3_data').getPublicUrl(filePath);
+src\components\admin\facultyManager.tsx:92: await supabase.from("Coaching-3_Faculty").update(dbPayload).eq("id", isEditing);
+src\components\admin\facultyManager.tsx:95: await supabase.from("Coaching-3_Faculty").insert([dbPayload]);
+src\components\admin\facultyManager.tsx:136: await supabase.storage
+src\components\admin\facultyManager.tsx:137: .from("coaching-3_data")
+src\components\admin\facultyManager.tsx:143: const { error } = await supabase
+src\components\admin\facultyManager.tsx:144: .from("Coaching-3_Faculty")
+src\components\admin\GalleryManager.tsx:5: import { supabase } from "@/supabaseClient";
+src\components\admin\GalleryManager.tsx:16: const { data, error } = await supabase
+src\components\admin\GalleryManager.tsx:17: .from("Coaching-3_Gallery")
+src\components\admin\GalleryManager.tsx:38: await supabase.storage.from('coaching-3_data').remove([oldPath]);
+src\components\admin\GalleryManager.tsx:46: const { error: uploadError } = await supabase.storage
+src\components\admin\GalleryManager.tsx:47: .from('coaching-3_data')
+src\components\admin\GalleryManager.tsx:52: const { data } = supabase.storage.from('coaching-3_data').getPublicUrl(filePath);
+src\components\admin\GalleryManager.tsx:68: const { error } = await supabase
+src\components\admin\GalleryManager.tsx:69: .from("Coaching-3_Gallery")
+src\components\admin\GalleryManager.tsx:75: const { error } = await supabase
+src\components\admin\GalleryManager.tsx:76: .from("Coaching-3_Gallery")
+src\components\admin\GalleryManager.tsx:109: const { data: item } = await supabase
+src\components\admin\GalleryManager.tsx:110: .from("Coaching-3_Gallery")
+src\components\admin\GalleryManager.tsx:118: await supabase.storage.from('coaching-3_data').remove([filePath]);
+src\components\admin\GalleryManager.tsx:123: const { error } = await supabase.from("Coaching-3_Gallery").delete().eq("id", id);
+src\components\admin\HeroManager.tsx:8: import { supabase } from "@/supabaseClient";
+src\components\admin\HeroManager.tsx:32: const { data, error } = await supabase
+src\components\admin\HeroManager.tsx:33: .from("Coaching-3_Hero")
+src\components\admin\HeroManager.tsx:81: const { error: uploadError } = await supabase.storage
+src\components\admin\HeroManager.tsx:82: .from('coaching-3_data')
+src\components\admin\HeroManager.tsx:91: const { data: urlData } = supabase.storage.from('coaching-3_data').getPublicUrl(filePath);
+src\components\admin\HeroManager.tsx:109: result = await supabase.from("Coaching-3_Hero").update(payload).eq("id", heroId);
+src\components\admin\HeroManager.tsx:111: result = await supabase.from("Coaching-3_Hero").insert([payload]);
+src\components\admin\HeroManager.tsx:130: const { error } = await supabase.from("Coaching-3_Hero").delete().eq("id", heroId);
+src\components\admin\InquiryInbox.tsx:6: import { supabase } from "@/supabaseClient";
+src\components\admin\InquiryInbox.tsx:15: const { data, error } = await supabase
+src\components\admin\InquiryInbox.tsx:16: .from("Coaching-3_Contactform")
+src\components\admin\InquiryInbox.tsx:35: const { error } = await supabase
+src\components\admin\InquiryInbox.tsx:36: .from("Coaching-3_Contactform")
+src\components\admin\NotificationSectionManager.tsx:2: import { supabase } from '@/supabaseClient';
+src\components\admin\NotificationSectionManager.tsx:42: const { data } = await supabase
+src\components\admin\NotificationSectionManager.tsx:43: .from("Coaching-3_StudentBatches")
+src\components\admin\NotificationSectionManager.tsx:59: const { data } = await supabase
+src\components\admin\NotificationSectionManager.tsx:60: .from("Coaching-3_Courses")
+src\components\admin\NotificationSectionManager.tsx:72: const { data, error } = await supabase
+src\components\admin\NotificationSectionManager.tsx:73: .from("Coaching-3_Notifications")
+src\components\admin\NotificationSectionManager.tsx:141: const { error } = await supabase
+src\components\admin\NotificationSectionManager.tsx:142: .from("Coaching-3_Notifications")
+src\components\admin\NotificationSectionManager.tsx:151: const { error } = await supabase
+src\components\admin\NotificationSectionManager.tsx:152: .from("Coaching-3_Notifications")
+src\components\admin\NotificationSectionManager.tsx:167: const { error } = await supabase
+src\components\admin\NotificationSectionManager.tsx:168: .from('Coaching-3_Notifications')
+src\components\admin\StudentManager.tsx:5: import { supabase } from "@/supabaseClient";
+src\components\admin\StudentManager.tsx:82: const { data, error } = await supabase
+src\components\admin\StudentManager.tsx:83: .from("Coaching-3_StudentApprovals")
+src\components\admin\StudentManager.tsx:99: const { data, error } = await supabase
+src\components\admin\StudentManager.tsx:100: .from("Coaching-3_Students")
+src\components\admin\StudentManager.tsx:133: const { data } = await supabase
+src\components\admin\StudentManager.tsx:134: .from("Coaching-3_Courses")
+src\components\admin\StudentManager.tsx:145: const { data } = await supabase
+src\components\admin\StudentManager.tsx:146: .from("Coaching-3_StudentBatches")
+src\components\admin\StudentManager.tsx:183: const { data: approval, error: approvalError } = await supabase
+src\components\admin\StudentManager.tsx:184: .from("Coaching-3_StudentApprovals")
+src\components\admin\StudentManager.tsx:196: const { data: existingStudent } = await supabase
+src\components\admin\StudentManager.tsx:197: .from("Coaching-3_Students")
+src\components\admin\StudentManager.tsx:210: const { error: insertError } = await supabase
+src\components\admin\StudentManager.tsx:211: .from("Coaching-3_Students")
+src\components\admin\StudentManager.tsx:238: const { error: updateStudentError } = await supabase
+src\components\admin\StudentManager.tsx:239: .from("Coaching-3_Students")
+src\components\admin\StudentManager.tsx:259: const { error: approveError } = await supabase
+src\components\admin\StudentManager.tsx:260: .from("Coaching-3_StudentApprovals")
+src\components\admin\StudentManager.tsx:288: const { error } = await supabase
+src\components\admin\StudentManager.tsx:289: .from("Coaching-3_StudentApprovals")
+src\components\admin\StudentManager.tsx:318: const { error } = await supabase
+src\components\admin\StudentManager.tsx:319: .from("Coaching-3_Students")
+src\components\admin\StudentManager.tsx:350: const { error } = await supabase
+src\components\admin\StudentManager.tsx:351: .from("Coaching-3_Students")
+src\components\admin\StudentManager.tsx:388: const { error } = await supabase
+src\components\admin\StudentManager.tsx:389: .from("Coaching-3_Students")
+src\components\admin\StudentManager.tsx:429: const { error } = await supabase
+src\components\admin\StudentManager.tsx:430: .from("Coaching-3_Students")
+src\components\admin\StudyMaterialManager.tsx:5: import { supabase } from "@/supabaseClient";
+src\components\admin\StudyMaterialManager.tsx:44: const { data } = await supabase
+src\components\admin\StudyMaterialManager.tsx:45: .from("Coaching-3_StudyMaterial")
+src\components\admin\StudyMaterialManager.tsx:52: const { data, error } = await supabase
+src\components\admin\StudyMaterialManager.tsx:53: .from("Coaching-3_Courses")
+src\components\admin\StudyMaterialManager.tsx:63: const { data } = await supabase
+src\components\admin\StudyMaterialManager.tsx:64: .storage
+src\components\admin\StudyMaterialManager.tsx:65: .from("coaching-3_private")
+src\components\admin\StudyMaterialManager.tsx:111: await supabase.storage.from('coaching-3_private').remove([oldPath]);
+src\components\admin\StudyMaterialManager.tsx:116: const { error: uploadError } = await supabase.storage
+src\components\admin\StudyMaterialManager.tsx:117: .from('coaching-3_private')
+src\components\admin\StudyMaterialManager.tsx:122: // const { data } = supabase.storage.from('coaching-3_private').getPublicUrl(filePath);
+src\components\admin\StudyMaterialManager.tsx:153: const { error } = await supabase
+src\components\admin\StudyMaterialManager.tsx:154: .from("Coaching-3_StudyMaterial")
+src\components\admin\StudyMaterialManager.tsx:162: const { error } = await supabase
+src\components\admin\StudyMaterialManager.tsx:163: .from("Coaching-3_StudyMaterial")
+src\components\admin\StudyMaterialManager.tsx:214: const { data: item } = await supabase
+src\components\admin\StudyMaterialManager.tsx:215: .from("Coaching-3_StudyMaterial")
+src\components\admin\StudyMaterialManager.tsx:222: await supabase.storage.from('coaching-3_private').remove([filePath]);
+src\components\admin\StudyMaterialManager.tsx:226: const { error } = await supabase.from("Coaching-3_StudyMaterial").delete().eq("id", id);
+src\components\admin\TopperManager.tsx:7: import { supabase } from "@/supabaseClient";
+src\components\admin\TopperManager.tsx:25: const { data, error } = await supabase
+src\components\admin\TopperManager.tsx:26: .from("Coaching-3_Toppers")
+src\components\admin\TopperManager.tsx:52: await supabase.storage.from('coaching-3_data').remove([oldPath]);
+src\components\admin\TopperManager.tsx:61: const { error: uploadError } = await supabase.storage
+src\components\admin\TopperManager.tsx:62: .from('coaching-3_data')
+src\components\admin\TopperManager.tsx:67: const { data } = supabase.storage.from('coaching-3_data').getPublicUrl(filePath);
+src\components\admin\TopperManager.tsx:99: const { error } = await supabase
+src\components\admin\TopperManager.tsx:100: .from("Coaching-3_Toppers")
+src\components\admin\TopperManager.tsx:106: const { error } = await supabase
+src\components\admin\TopperManager.tsx:107: .from("Coaching-3_Toppers")
+src\components\admin\TopperManager.tsx:144: const { data: topper } = await supabase
+src\components\admin\TopperManager.tsx:145: .from("Coaching-3_Toppers")
+src\components\admin\TopperManager.tsx:153: await supabase.storage.from('coaching-3_data').remove([filePath]);
+src\components\admin\TopperManager.tsx:157: await supabase.from("Coaching-3_Toppers").delete().eq("id", id);
+src\components\admin\VideosManager.tsx:2: import { supabase } from "@/supabaseClient";
+src\components\admin\VideosManager.tsx:27: const { data, error } = await supabase
+src\components\admin\VideosManager.tsx:28: .from("Coaching-3_Courses")
+src\components\admin\VideosManager.tsx:41: const { data, error } = await supabase
+src\components\admin\VideosManager.tsx:42: .from('Coaching-3_VideoLectures')
+src\components\admin\VideosManager.tsx:101: const { error } = await supabase.from('Coaching-3_VideoLectures').insert([newVideo]);
+src\components\admin\VideosManager.tsx:122: const { error } = await supabase.from('Coaching-3_VideoLectures').delete().eq('id', id);
+src\components\ContactSection.tsx:7: import { supabase } from "@/supabaseClient";
+src\components\ContactSection.tsx:29: const { data, error } = await supabase
+src\components\ContactSection.tsx:30: .from("Coaching-3_Courses")
+src\components\ContactSection.tsx:58: const { error } = await supabase
+src\components\ContactSection.tsx:59: .from("Coaching-3_Contactform")
+src\components\FacultySection.tsx:4: import { supabase } from "@/supabaseClient";
+src\components\FacultySection.tsx:49: const { data, error } = await supabase
+src\components\FacultySection.tsx:50: .from("Coaching-3_Faculty")
+src\components\GallerySection.tsx:5: import { supabase } from "@/supabaseClient";
+src\components\GallerySection.tsx:48: const { data, error } = await supabase
+src\components\GallerySection.tsx:49: .from("Coaching-3_Gallery")
+src\components\HeroSection.tsx:4: import { supabase } from "@/supabaseClient";
+src\components\HeroSection.tsx:30: const { data, error } = await supabase
+src\components\HeroSection.tsx:31: .from("Coaching-3_Hero")
+src\components\HeroSection.tsx:44: // ✅ Dynamic heading from Supabase
+src\components\NotificationSection.tsx:2: import { supabase } from '@/supabaseClient'
+src\components\NotificationSection.tsx:49: const { data, error } = await supabase
+src\components\NotificationSection.tsx:50: .from("Coaching-3_Notifications")
+src\components\StudentProfileDrawer.tsx:11: import { supabase } from "@/supabaseClient";
+src\components\StudentProfileDrawer.tsx:299: await supabase.auth.signOut();
+src\components\StudyMaterialSection.tsx:5: import { supabase } from "@/supabaseClient";
+src\components\StudyMaterialSection.tsx:43: } = await supabase
+src\components\StudyMaterialSection.tsx:44: .from("Coaching-3_StudyMaterial")
+src\components\StudyMaterialSection.tsx:59: } = await supabase
+src\components\StudyMaterialSection.tsx:60: .from("Coaching-3_VideoLectures")
+src\components\StudyMaterialSection.tsx:149: const { data: { session } } = await supabase.auth.getSession();
+src\components\StudyMaterialSection.tsx:155: const { data: urlData } = await supabase
+src\components\StudyMaterialSection.tsx:156: .storage
+src\components\StudyMaterialSection.tsx:157: .from("coaching-3_private")
+src\components\StudyMaterialSection.tsx:255: {Array.from({ length: totalPdfPages }, (_, i) => (
+src\components\StudyMaterialSection.tsx:348: {Array.from({ length: totalVideoPages }, (_, i) => (
+src\components\ToppersSection.tsx:5: import { supabase } from "@/supabaseClient";
+src\components\ToppersSection.tsx:51: const { data, error } = await supabase
+src\components\ToppersSection.tsx:52: .from("Coaching-3_Toppers")
+src\contexts\TenantContext.jsx:2: import { supabase } from "../supabaseClient";
+src\contexts\TenantContext.jsx:3: // Agar tumhara Supabase client kisi aur file mein hai,
+src\contexts\TenantContext.jsx:22: const { data, error: rpcError } = await supabase.rpc(
+src\lib\data.ts:2: // pata rahe ki Supabase se kaisa data aayega.
+src\lib\data.ts:50: // aur KEYS delete kar diye hain kyunki aap direct Supabase queries use karenge.
+src\pages\Admin.tsx:19: import { supabase } from "@/supabaseClient";
+src\pages\Admin.tsx:138: const { data, error } = await supabase
+src\pages\Admin.tsx:139: .from("Coaching-3_Admins")
+src\pages\Admin.tsx:173: } = await supabase.auth.getUser();
+src\pages\Admin.tsx:184: const { data: membership, error: membershipError } = await supabase
+src\pages\Admin.tsx:185: .from("Coaching-3_TenantAdmins")
+src\pages\Admin.tsx:194: await supabase.auth.signOut();
+src\pages\Admin.tsx:201: const { data: adminData, error: adminError } = await supabase
+src\pages\Admin.tsx:202: .from("Coaching-3_Admins")
+src\pages\Admin.tsx:211: await supabase.auth.signOut();
+src\pages\Admin.tsx:257: } = await supabase.auth.getSession();
+src\pages\Admin.tsx:260: "https://omobunntirxvscmwlbiq.supabase.co/functions/v1/invite-admin",
+src\pages\Admin.tsx:314: } = await supabase.auth.getSession();
+src\pages\Admin.tsx:317: "https://omobunntirxvscmwlbiq.supabase.co/functions/v1/delete-admin",
+src\pages\Admin.tsx:368: const { error } = await supabase.auth.signOut();
+src\pages\AdminLogin.tsx:3: import { supabase } from "@/supabaseClient";
+src\pages\AdminLogin.tsx:22: } = await supabase.auth.getUser();
+src\pages\AdminLogin.tsx:30: const { data: adminData } = await supabase
+src\pages\AdminLogin.tsx:31: .from("Coaching-3_Admins")
+src\pages\AdminLogin.tsx:39: await supabase.auth.signOut();
+src\pages\AdminLogin.tsx:59: await supabase.auth.signInWithPassword({
+src\pages\AdminLogin.tsx:72: await supabase
+src\pages\AdminLogin.tsx:73: .from("Coaching-3_Admins")
+src\pages\AdminLogin.tsx:80: await supabase.auth.signOut();
+src\pages\AdminLogin.tsx:89: await supabase.auth.signOut();
+src\pages\Dashboard.tsx:2: import { supabase } from "@/supabaseClient";
+src\pages\Dashboard.tsx:85: } = await supabase.auth.getSession();
+src\pages\Dashboard.tsx:104: } = await supabase
+src\pages\Dashboard.tsx:105: .from("Coaching-3_Students")
+src\pages\Dashboard.tsx:123: } = await supabase
+src\pages\Dashboard.tsx:124: .from("Coaching-3_StudentApprovals")
+src\pages\Dashboard.tsx:135: await supabase.auth.signOut();
+src\pages\Dashboard.tsx:148: await supabase.auth.signOut();
+src\pages\Dashboard.tsx:182: await supabase.auth.signOut();
+src\pages\Dashboard.tsx:203: const channel = supabase
+src\pages\Dashboard.tsx:204: .channel("student-approval-realtime")
+src\pages\Dashboard.tsx:249: await supabase.auth.signOut();
+src\pages\Dashboard.tsx:263: supabase.removeChannel(channel);
+src\pages\Dashboard.tsx:271: const studentChannel = supabase
+src\pages\Dashboard.tsx:272: .channel("student-profile-realtime")
+src\pages\Dashboard.tsx:314: supabase.removeChannel(studentChannel);
+src\pages\Dashboard.tsx:321: const { data, error } = await supabase
+src\pages\Dashboard.tsx:322: .from("Coaching-3_Courses")
+src\pages\Dashboard.tsx:363: const { error: approvalError } = await supabase
+src\pages\Dashboard.tsx:364: .from("Coaching-3_StudentApprovals")
+src\pages\Dashboard.tsx:372: const { error: studentError } = await supabase
+src\pages\Dashboard.tsx:373: .from("Coaching-3_Students")
+src\pages\Dashboard.tsx:415: await supabase.auth.signOut();
+src\pages\SetPassword.tsx:3: import { supabase } from "@/supabaseClient";
+src\pages\SetPassword.tsx:30: } = await supabase.auth.getSession();
+src\pages\SetPassword.tsx:78: await supabase.auth.updateUser({
+src\pages\SetPassword.tsx:90: } = await supabase.auth.getUser();
+src\pages\SetPassword.tsx:94: const { error: updateError } = await supabase
+src\pages\SetPassword.tsx:95: .from("Coaching-3_Admins")
+src\pages\SetPassword.tsx:114: await supabase.auth.signOut(); // Invite session close
+src\pages\UserLogin.tsx:2: import { supabase } from "@/supabaseClient";
+src\pages\UserLogin.tsx:41: } = await supabase.auth.getSession();
+src\pages\UserLogin.tsx:53: const { data: student, error: studentError } = await supabase
+src\pages\UserLogin.tsx:54: .from("Coaching-3_Students")
+src\pages\UserLogin.tsx:68: const { data: approval, error: approvalError } = await supabase
+src\pages\UserLogin.tsx:69: .from("Coaching-3_StudentApprovals")
+src\pages\UserLogin.tsx:80: await supabase.auth.signOut();
+src\pages\UserLogin.tsx:103: const { data, error } = await supabase
+src\pages\UserLogin.tsx:104: .from("Coaching-3_Courses")
+src\pages\UserLogin.tsx:156: const { error } = await supabase.auth.signInWithOtp({
+src\pages\UserLogin.tsx:207: } = await supabase.auth.verifyOtp({
+src\pages\UserLogin.tsx:229: await supabase.rpc(
+src\pages\UserLogin.tsx:252: } = await supabase
+src\pages\UserLogin.tsx:253: .from("Coaching-3_Students")
+src\pages\UserLogin.tsx:270: const { error: linkError } = await supabase
+src\pages\UserLogin.tsx:271: .from("Coaching-3_Students")
+src\pages\UserLogin.tsx:288: } = await supabase
+src\pages\UserLogin.tsx:289: .from("Coaching-3_StudentApprovals")
+src\pages\UserLogin.tsx:301: await supabase
+src\pages\UserLogin.tsx:302: .from("Coaching-3_StudentApprovals")
+src\pages\UserLogin.tsx:323: await supabase
+src\pages\UserLogin.tsx:324: .from("Coaching-3_StudentApprovals")
+src\pages\UserLogin.tsx:343: } = await supabase
+src\pages\UserLogin.tsx:344: .from("Coaching-3_StudentApprovals")
+src\pages\UserLogin.tsx:354: const { error: insertError } = await supabase
+src\pages\UserLogin.tsx:355: .from("Coaching-3_StudentApprovals")
+src\pages\UserLogin.tsx:373: const { error: updateError } = await supabase
+src\pages\UserLogin.tsx:374: .from("Coaching-3_StudentApprovals")
+src\services\dashboardService.ts:1: import { supabase } from "@/supabaseClient";
+src\services\dashboardService.ts:73: } = await supabase
+src\services\dashboardService.ts:74: .from("Coaching-3_StudentFees")
+src\services\dashboardService.ts:92: } = await supabase
+src\services\dashboardService.ts:93: .from("Coaching-3_StudentFees")
+src\services\dashboardService.ts:130: } = await supabase
+src\services\dashboardService.ts:131: .from("Coaching-3_AttendanceRecords")
+src\utils\batchUtils.ts:1: import { supabase } from "@/supabaseClient";
+src\utils\batchUtils.ts:9: const { count, error: countError } = await supabase
+src\utils\batchUtils.ts:10: .from("Coaching-3_Students")
+src\utils\batchUtils.ts:21: const { error: updateError } = await supabase
+src\utils\batchUtils.ts:22: .from("Coaching-3_StudentBatches")
+src\utils\rollNumberUtils.ts:1: import { supabase } from "@/supabaseClient";
+src\utils\rollNumberUtils.ts:7: const { data, error } = await supabase
+src\utils\rollNumberUtils.ts:8: .from("Coaching-3_Students")
+src\utils\rollNumberUtils.ts:23: const { data, error } = await supabase
+src\utils\rollNumberUtils.ts:24: .from("Coaching-3_Students")
+src\utils\studentUtils.ts:1: import { supabase } from "@/supabaseClient";
+src\utils\studentUtils.ts:5: const { data: lastStudent } = await supabase
+src\utils\studentUtils.ts:6: .from("Coaching-3_Students")
+src\supabaseClient.js:1: import { createClient } from '@supabase/supabase-js';
+src\supabaseClient.js:3: const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+src\supabaseClient.js:4: const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+src\supabaseClient.js:7: export const supabase = createClient(supabaseUrl, supabaseKey);
+supabase\functions\delete-admin\index.ts:2: import { createClient } from "@supabase/supabase-js";
+supabase\functions\delete-admin\index.ts:30: const supabaseUrl = Deno.env.get("SUPABASE_URL");
+supabase\functions\delete-admin\index.ts:31: const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+supabase\functions\delete-admin\index.ts:33: if (!supabaseUrl || !serviceRoleKey) {
+supabase\functions\delete-admin\index.ts:37: const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+supabase\functions\delete-admin\index.ts:49: } = await supabaseAdmin.auth.getUser(token);
+supabase\functions\delete-admin\index.ts:67: const { data: membership, error: membershipError } = await supabaseAdmin
+supabase\functions\delete-admin\index.ts:68: .from("Coaching-3_TenantAdmins")
+supabase\functions\delete-admin\index.ts:86: const { data: adminData, error: adminError } = await supabaseAdmin
+supabase\functions\delete-admin\index.ts:87: .from("Coaching-3_Admins")
+supabase\functions\delete-admin\index.ts:106: const { error: membershipDeleteError } = await supabaseAdmin
+supabase\functions\delete-admin\index.ts:107: .from("Coaching-3_TenantAdmins")
+supabase\functions\delete-admin\index.ts:120: const { error: profileDeleteError } = await supabaseAdmin
+supabase\functions\delete-admin\index.ts:121: .from("Coaching-3_Admins")
+supabase\functions\invite-admin\index.ts:2: import { createClient } from "@supabase/supabase-js";
+supabase\functions\invite-admin\index.ts:30: const supabaseUrl = Deno.env.get("SUPABASE_URL");
+supabase\functions\invite-admin\index.ts:31: const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+supabase\functions\invite-admin\index.ts:33: if (!supabaseUrl || !serviceRoleKey) {
+supabase\functions\invite-admin\index.ts:37: const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+supabase\functions\invite-admin\index.ts:49: } = await supabaseAdmin.auth.getUser(token);
+supabase\functions\invite-admin\index.ts:74: const { data: tenant, error: tenantError } = await supabaseAdmin
+supabase\functions\invite-admin\index.ts:75: .from("Coaching-3_Tenants")
+supabase\functions\invite-admin\index.ts:85: const { data: membership, error: membershipError } = await supabaseAdmin
+supabase\functions\invite-admin\index.ts:86: .from("Coaching-3_TenantAdmins")
+supabase\functions\invite-admin\index.ts:104: const { data: existingAdmin, error: existingError } = await supabaseAdmin
+supabase\functions\invite-admin\index.ts:105: .from("Coaching-3_Admins")
+supabase\functions\invite-admin\index.ts:123: await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+supabase\functions\invite-admin\index.ts:137: const { error: profileError } = await supabaseAdmin
+supabase\functions\invite-admin\index.ts:138: .from("Coaching-3_Admins")
+supabase\functions\invite-admin\index.ts:155: const { error: membershipInsertError } = await supabaseAdmin
+supabase\functions\invite-admin\index.ts:156: .from("Coaching-3_TenantAdmins")
+supabase\functions\invite-admin\index.ts:165: await supabaseAdmin
+supabase\functions\invite-admin\index.ts:166: .from("Coaching-3_Admins")

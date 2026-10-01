@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTenant } from "@/contexts/TenantContext";
 
 import {
   CheckCircle2,
@@ -39,6 +40,7 @@ export default function BulkAssignFeeDrawer({
   students,
   onAssigned,
 }: BulkAssignFeeDrawerProps) {
+  const { tenant } = useTenant();
   const [loading, setLoading] = useState(false);
 
   const [feeStructures, setFeeStructures] = useState<any[]>([]);
@@ -63,8 +65,8 @@ export default function BulkAssignFeeDrawer({
    */
   const grandTotal = selectedFee
     ? Number(selectedFee.total_fee) +
-      Number(selectedFee.admission_fee) +
-      Number(selectedFee.registration_fee)
+    Number(selectedFee.admission_fee) +
+    Number(selectedFee.registration_fee)
     : 0;
 
   const finalFee = Math.max(
@@ -77,26 +79,29 @@ export default function BulkAssignFeeDrawer({
    * or selected course changes.
    */
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !tenant?.id) return;
 
     setSelectedStructure("");
     setDiscount(0);
 
     fetchFeeStructures();
-  }, [isOpen, courseId]);
+  }, [isOpen, courseId, tenant?.id]);
+
 
   const fetchFeeStructures = async () => {
+    if (!tenant?.id) return;
+
     if (!courseId) {
       setFeeStructures([]);
       return;
     }
-
     setLoading(true);
 
     try {
       const { data, error } = await supabase
         .from("Coaching-3_FeeStructures")
         .select("*")
+        .eq("tenant_id", tenant.id)
         .eq("course_id", courseId)
         .eq("status", "active")
         .order("created_at", {
@@ -114,7 +119,7 @@ export default function BulkAssignFeeDrawer({
 
       toast.error(
         error?.message ||
-          "Failed to load fee structures."
+        "Failed to load fee structures."
       );
 
       setFeeStructures([]);
@@ -127,6 +132,10 @@ export default function BulkAssignFeeDrawer({
    * BULK ASSIGN
    */
   const handleBulkAssign = async () => {
+    if (!tenant?.id) {
+      toast.error("Coaching tenant is not loaded.");
+      return;
+    }
     if (!students.length) {
       toast.error("No students selected.");
       return;
@@ -189,7 +198,8 @@ export default function BulkAssignFeeDrawer({
           .from("Coaching-3_StudentFees")
           .select("student_id")
           .in("student_id", studentIds)
-          .eq("academic_year", academicYear);
+          .eq("academic_year", academicYear)
+          .eq("tenant_id", tenant.id);
 
       if (existingError) {
         throw existingError;
@@ -224,60 +234,43 @@ export default function BulkAssignFeeDrawer({
       /*
        * Create one fee record for each student.
        */
-      const insertRows = studentsToAssign.map(
-        (student) => ({
-          student_id: student.id,
+      const insertRows = studentsToAssign.map((student) => ({
+        tenant_id: tenant.id,
+        student_id: student.id,
 
-          /*
-           * IMPORTANT:
-           * Take course + batch from student's
-           * CURRENT assignment.
-           */
-          course_id: student.course_id,
-          batch_id: student.batch_id,
+        /*
+         * Take course + batch from student's
+         * CURRENT assignment.
+         */
+        course_id: student.course_id,
+        batch_id: student.batch_id,
 
-          academic_year: academicYear,
+        academic_year: academicYear,
+        fee_structure_id: selectedStructure,
 
-          fee_structure_id: selectedStructure,
+        /*
+         * Snapshot from selected fee structure
+         */
+        course_fee: Number(selectedFee.total_fee),
+        admission_fee: Number(selectedFee.admission_fee),
+        registration_fee: Number(selectedFee.registration_fee),
+        duration_months: Number(selectedFee.duration_months),
 
-          /*
-           * Snapshot from selected fee structure
-           */
-          course_fee: Number(
-            selectedFee.total_fee
-          ),
+        /*
+         * Totals
+         */
+        total_fee: grandTotal,
+        discount: Number(discount || 0),
+        final_fee: finalFee,
 
-          admission_fee: Number(
-            selectedFee.admission_fee
-          ),
-
-          registration_fee: Number(
-            selectedFee.registration_fee
-          ),
-
-          duration_months: Number(
-            selectedFee.duration_months
-          ),
-
-          /*
-           * Totals
-           */
-          total_fee: grandTotal,
-
-          discount: Number(discount || 0),
-
-          final_fee: finalFee,
-
-          /*
-           * New fee assignment always starts at 0
-           */
-          paid_amount: 0,
-
-          remaining_amount: finalFee,
-
-          status: "Pending",
-        })
-      );
+        /*
+         * New fee assignment always starts at 0
+         */
+        paid_amount: 0,
+        remaining_amount: finalFee,
+        status: "Pending",
+      }));
+      
 
       const { error: insertError } =
         await supabase
@@ -319,7 +312,7 @@ export default function BulkAssignFeeDrawer({
 
       toast.error(
         error?.message ||
-          "Failed to assign fee structures."
+        "Failed to assign fee structures."
       );
     } finally {
       setLoading(false);
@@ -456,7 +449,7 @@ export default function BulkAssignFeeDrawer({
                 value={
                   students.length === 1
                     ? students[0]?.batch?.batch_name ||
-                      "Not Assigned"
+                    "Not Assigned"
                     : "Multiple / Selected Batches"
                 }
                 disabled

@@ -1,13 +1,18 @@
 import { supabase } from "@/supabaseClient";
 
-export const generateStudentId = async () => {
+export const generateStudentId = async (
+    tenantId: string
+) => {
 
-    const { data: lastStudent } = await supabase
+    const { data: lastStudent, error } = await supabase
         .from("Coaching-3_Students")
         .select("student_id")
+        .eq("tenant_id", tenantId)
         .order("id", { ascending: false })
         .limit(1)
         .maybeSingle();
+
+    if (error) throw error;
 
     let nextNumber = 1;
 
@@ -19,9 +24,7 @@ export const generateStudentId = async () => {
             ) || 0;
 
         nextNumber = last + 1;
-
     }
 
     return `STU-${new Date().getFullYear()}-${String(nextNumber).padStart(3, "0")}`;
-
 };

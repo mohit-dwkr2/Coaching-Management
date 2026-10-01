@@ -1,10 +1,20 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Download, FileText, Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  motion,
+  AnimatePresence,
+} from "framer-motion";
+import {
+  Download,
+  FileText,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner"
+import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
 
 // 1. Interface definition
 interface StudyMaterialProps {
@@ -20,80 +30,116 @@ export default function StudyMaterialSection({
   onTotalCount,
   onSubjectCount,
 }: StudyMaterialProps) {
+  const { tenant } = useTenant();
 
-  // ✅ States jo UI toggle ke liye chahiye
+  // UI selection states
   const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedVideoSubject, setSelectedVideoSubject] = useState("");
 
-  // ✅ Pagination States
+  // Pagination states
   const [pdfPage, setPdfPage] = useState(1);
   const [videoPage, setVideoPage] = useState(1);
+
   const itemsPerPagePdf = 5;
   const itemsPerPageVideo = 8;
 
-  // ✅ REACT QUERY: Data fetch aur Cache ek saath
+  // React Query: fetch and cache materials/videos
   const { data: allContent, isLoading } = useQuery({
-    queryKey: ["study-materials", courseId],
+    queryKey: ["study-materials", tenant?.id, courseId],
+
     queryFn: async () => {
+      if (!tenant?.id || !courseId) {
+        return { materials: [], videos: [] };
+      }
 
-
-      // 1. PDF Materials Fetching
+      // 1. PDF Materials
       const {
         data: matData,
         error: materialError,
       } = await supabase
         .from("Coaching-3_StudyMaterial")
         .select("*")
+        .eq("tenant_id", tenant.id)
         .eq("course_id", courseId)
-        .order("created_at", {
-          ascending: false,
-        });
+        .order("created_at", { ascending: false });
+
       if (materialError) {
         throw materialError;
       }
 
-
-      // 2. Video Fetching
+      // 2. Video Lectures
       const {
         data: vidData,
         error: videoError,
       } = await supabase
         .from("Coaching-3_VideoLectures")
         .select("*")
+        .eq("tenant_id", tenant.id)
         .eq("course_id", courseId);
+
       if (videoError) {
         throw videoError;
       }
 
-
-      // Dashboard counts logic
-      if (matData) {
-        onTotalCount?.(matData.length);
-        if (matData.length > 0 && !selectedSubject) {
-          const firstSub = matData[0].subject;
-          setSelectedSubject(firstSub);
-          onSubjectCount?.(matData.filter(m => m.subject === firstSub).length);
-        }
-      }
-      return { materials: matData || [], videos: vidData || [] };
+      return {
+        materials: matData ?? [],
+        videos: vidData ?? [],
+      };
     },
 
-      enabled: !!courseId,
-      
-    staleTime: 1000 * 60 * 30, // 30 Min Cache
-    gcTime: 1000 * 60 * 60,    // 1 Hour Memory
+    enabled: !!tenant?.id && !!courseId && notesAccess !== false,
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
   });
 
-  const materials = allContent?.materials || [];
-  const videos = allContent?.videos || [];
-  const [selectedVideoSubject, setSelectedVideoSubject] = useState("");
+  const materials = allContent?.materials ?? [];
+  const videos = allContent?.videos ?? [];
 
+  // Reset selections and pagination when tenant/course changes
+  useEffect(() => {
+    setSelectedSubject("");
+    setSelectedVideoSubject("");
+    setPdfPage(1);
+    setVideoPage(1);
+  }, [tenant?.id, courseId]);
 
-  const videoSubjects = [...new Set(videos.map(v => v.subject))];
+  // Notify parent about total materials and selected-subject count.
+  // Keep these updates outside the React Query queryFn.
+  useEffect(() => {
+    onTotalCount?.(materials.length);
+  }, [materials, onTotalCount]);
+
+  useEffect(() => {
+    if (materials.length > 0 && !selectedSubject) {
+      setSelectedSubject(materials[0].subject ?? "");
+    }
+  }, [materials, selectedSubject]);
+
+  useEffect(() => {
+    const count = materials.filter(
+      (material) => material.subject === selectedSubject
+    ).length;
+
+    onSubjectCount?.(count);
+  }, [materials, selectedSubject, onSubjectCount]);
+
+  // Video subject filtering
+  const videoSubjects = [
+    ...new Set(
+      videos
+        .map((video) => video.subject)
+        .filter(
+          (subject): subject is string => Boolean(subject)
+        )
+    ),
+  ];
 
   const filteredVideos =
     selectedVideoSubject === ""
       ? videos
-      : videos.filter(v => v.subject === selectedVideoSubject);
+      : videos.filter(
+          (video) => video.subject === selectedVideoSubject
+        );
 
   const totalVideoPages = Math.ceil(
     filteredVideos.length / itemsPerPageVideo
@@ -104,21 +150,11 @@ export default function StudyMaterialSection({
     videoPage * itemsPerPageVideo
   );
 
-  useEffect(() => {
-    // Agar materials load ho chuke hain (cache se ya fetch se) 
-    // aur abhi koi subject selected nahi hai (mtlb user just tab switch karke aaya hai)
-    if (materials.length > 0 && !selectedSubject) {
-      const firstSub = materials[0].subject;
-      setSelectedSubject(firstSub);
-    }
-  }, [materials, selectedSubject]);
-
-
+  // Locked access UI
   if (notesAccess === false) {
     return (
       <div className="min-h-[500px] flex items-center justify-center">
         <div className="max-w-lg w-full bg-white border border-red-100 rounded-3xl p-10 text-center shadow-sm">
-
           <div className="mx-auto mb-6 h-16 w-16 rounded-full bg-red-50 flex items-center justify-center">
             <FileText className="text-red-500" size={30} />
           </div>
@@ -128,56 +164,89 @@ export default function StudyMaterialSection({
           </h2>
 
           <p className="text-slate-500 mt-3 leading-relaxed">
-            Your study material access has been disabled by your coaching institute.
-            Please contact the administration for more information.
+            Your study material access has been disabled by your coaching
+            institute. Please contact the administration for more
+            information.
           </p>
-
         </div>
       </div>
     );
   }
 
-
   const handleSubjectChange = (sub: string) => {
     setSelectedSubject(sub);
-    setPdfPage(1); // Subject change par page reset
-    const count = materials.filter(m => m.subject === sub).length;
-    onSubjectCount?.(count);
+    setPdfPage(1);
   };
 
   const handleDownload = async (filePath: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    if (!tenant?.id || !filePath.startsWith(`${tenant.id}/`)) {
+      toast.error("Invalid file path for this coaching");
+      return;
+    }
+
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
       toast.error("Please login first");
       return;
     }
 
-    const { data: urlData } = await supabase
-      .storage
+    const {
+      data: urlData,
+      error,
+    } = await supabase.storage
       .from("coaching-3_private")
       .createSignedUrl(filePath, 300);
 
-    if (urlData?.signedUrl) {
-      window.open(urlData.signedUrl, '_blank');
-    } else {
-      toast.error("Something Went Wrong, please try again.");
+    if (error || !urlData?.signedUrl) {
+      toast.error("Something went wrong, please try again.");
+      return;
     }
+
+    window.open(
+      urlData.signedUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
-  // ✅ Filter logic
-  const subjectsForCourse = [...new Set(materials.map((m) => m.subject))];
-  const filteredMaterials = materials.filter(m => m.subject === selectedSubject);
+  // PDF subject filtering
+  const subjectsForCourse = [
+    ...new Set(
+      materials
+        .map((material) => material.subject)
+        .filter(
+          (subject): subject is string => Boolean(subject)
+        )
+    ),
+  ];
 
-  // ✅ PDF Pagination Calculations
-  const totalPdfPages = Math.ceil(filteredMaterials.length / itemsPerPagePdf);
-  const currentPdfs = filteredMaterials.slice((pdfPage - 1) * itemsPerPagePdf, pdfPage * itemsPerPagePdf);
+  const filteredMaterials = materials.filter(
+    (material) => material.subject === selectedSubject
+  );
 
-  if (isLoading)
+  // PDF pagination
+  const totalPdfPages = Math.ceil(
+    filteredMaterials.length / itemsPerPagePdf
+  );
+
+  const currentPdfs = filteredMaterials.slice(
+    (pdfPage - 1) * itemsPerPagePdf,
+    pdfPage * itemsPerPagePdf
+  );
+
+  if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-primary" />
       </div>
     );
+  }
+
+  // Keep the rest of your existing component JSX below this point.
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen">

@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
+
 
 import {
     Table,
@@ -74,6 +76,8 @@ export default function AttendanceTable({
     onDataLoaded,
 }: AttendanceTableProps) {
 
+    const { tenant } = useTenant();
+
     const [attendanceHistory, setAttendanceHistory] =
         useState<AttendanceSessionRow[]>([]);
 
@@ -81,9 +85,17 @@ export default function AttendanceTable({
         useState(false);
 
 
-    const fetchAttendanceHistory = async () => {
+    const fetchAttendanceHistory = useCallback(async () => {
+        if (!tenant?.id) {
+            setAttendanceHistory([]);
+            onDataLoaded?.([]);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
+
             let query = supabase
                 .from("Coaching-3_AttendanceSessions")
                 .select(`
@@ -91,25 +103,16 @@ export default function AttendanceTable({
                 attendance_date,
                 course_id,
                 batch_id,
-
                 present_count,
                 absent_count,
                 leave_count,
                 total_students,
-
                 is_locked,
-
-                course:Coaching-3_Courses(
-                    course_name
-                ),
-
-                batch:Coaching-3_StudentBatches(
-                    batch_name
-                )
+                course:Coaching-3_Courses(course_name),
+                batch:Coaching-3_StudentBatches(batch_name)
             `)
-                .order("attendance_date", {
-                    ascending: false,
-                });
+                .eq("tenant_id", tenant.id)
+                .order("attendance_date", { ascending: false });
 
             if (selectedCourse) {
                 query = query.eq("course_id", selectedCourse);
@@ -120,47 +123,42 @@ export default function AttendanceTable({
             }
 
             if (selectedDate) {
-                query = query.eq(
-                    "attendance_date",
-                    selectedDate
-                );
+                query = query.eq("attendance_date", selectedDate);
             }
 
             const { data, error } = await query;
 
             if (error) throw error;
 
-            setAttendanceHistory(
-                (data ?? []) as AttendanceSessionRow[]
-            );
-
-            onDataLoaded?.(
-                (data ?? []) as AttendanceSessionRow[]
-            );
-
+            const rows = (data ?? []) as AttendanceSessionRow[];
+            setAttendanceHistory(rows);
+            onDataLoaded?.(rows);
         } catch (error: any) {
-
             toast.error(error.message);
-
         } finally {
-
             setLoading(false);
-
         }
-
-    };
+    }, [
+        tenant?.id,
+        selectedCourse,
+        selectedBatch,
+        selectedDate,
+        onDataLoaded,
+    ]);
 
 
     const lockAttendance = async (
+
         sessionId: string
     ) => {
+        if (!tenant?.id) return;
         try {
             const { error } = await supabase
                 .from("Coaching-3_AttendanceSessions")
-                .update({
-                    is_locked: true,
-                })
-                .eq("id", sessionId);
+                .update({ is_locked: true })
+                .eq("id", sessionId)
+                .eq("tenant_id", tenant.id);
+
             if (error) throw error;
             toast.success("Attendance locked.");
             fetchAttendanceHistory();
@@ -172,13 +170,7 @@ export default function AttendanceTable({
 
     useEffect(() => {
         fetchAttendanceHistory();
-    }, [
-        refreshKey,
-        selectedCourse,
-        selectedBatch,
-        selectedDate,
-    ]);
-
+    }, [fetchAttendanceHistory, refreshKey]);
 
     if (loading) {
         return (

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/supabaseClient";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface BatchDrawerProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export default function BatchDrawer({
   onBatchCreated,
   selectedBatch,
 }: BatchDrawerProps) {
+  const { tenant, loading: tenantLoading } = useTenant();
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState("");
   const [batchName, setBatchName] = useState("");
@@ -28,19 +30,37 @@ export default function BatchDrawer({
   const [maxStudents, setMaxStudents] = useState("");
 
   const fetchCourses = async () => {
-    const { data } = await supabase
+    if (!tenant?.id) {
+      setCourses([]);
+      return;
+    }
+
+    const { data, error } = await supabase
       .from("Coaching-3_Courses")
       .select("*")
       .eq("status", "active")
+      .eq("tenant_id", tenant.id)
       .order("course_name");
 
-    if (data) {
-      setCourses(data);
+    if (error) {
+      toast.error(error.message);
+      setCourses([]);
+      return;
     }
+    setCourses(data || []);
   };
+
   useEffect(() => {
+    if (tenantLoading) return;
+
+    if (!tenant?.id) {
+      setCourses([]);
+      return;
+    }
+    setCourses([]);
+    setSelectedCourse("");
     fetchCourses();
-  }, []);
+  }, [tenant?.id, tenantLoading]);
 
 
   useEffect(() => {
@@ -118,6 +138,10 @@ export default function BatchDrawer({
 
 
   const saveBatch = async () => {
+    if (tenantLoading || !tenant?.id) {
+      toast.error("Tenant not found. Please try again.");
+      return;
+    }
 
     if (!selectedCourse) {
       toast.error("Please select a course.");
@@ -157,7 +181,8 @@ export default function BatchDrawer({
             max_students: Number(maxStudents),
             updated_at: new Date().toISOString(),
           })
-          .eq("id", selectedBatch.id);
+          .eq("id", selectedBatch.id)
+          .eq("tenant_id", tenant.id);
 
         if (error) throw error;
 
@@ -170,6 +195,7 @@ export default function BatchDrawer({
         const { error } = await supabase
           .from("Coaching-3_StudentBatches")
           .insert({
+            tenant_id: tenant.id,
             course_id: selectedCourse,
             batch_name: batchName.trim(),
             description: description.trim(),

@@ -13,6 +13,7 @@ import { generateStudentId } from "@/utils/studentUtils";
 import { exportToExcel } from "@/utils/exportExcel";
 import { printTable } from "@/utils/printTable";
 import ExportStudentsModal from "./student/ExportStudentsModal";
+import { useTenant } from "@/contexts/TenantContext";
 
 import {
   CheckCircle,
@@ -40,6 +41,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 const StudentManager = () => {
+  const { tenant } = useTenant();
 
   const [showExportModal, setShowExportModal] =
     useState(false);
@@ -79,15 +81,18 @@ const StudentManager = () => {
   // ================================
 
   const fetchPendingRequests = async () => {
+    if (!tenant?.id) return;
+
     const { data, error } = await supabase
       .from("Coaching-3_StudentApprovals")
       .select(`
-    *,
-    course:course_id (
-      id,
-      course_name
-    )
-  `)
+      *,
+      course:Coaching-3_Courses!student_approvals_course_tenant_fk (
+        id,
+        course_name
+      )
+    `)
+      .eq("tenant_id", tenant.id)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
@@ -95,20 +100,24 @@ const StudentManager = () => {
     setPendingRequests(data || []);
   };
 
+
   const fetchStudents = async () => {
+    if (!tenant?.id) return;
+
     const { data, error } = await supabase
       .from("Coaching-3_Students")
       .select(`
       *,
-      course:course_id (
+      course:Coaching-3_Courses!students_course_tenant_fk (
         id,
         course_name
       ),
-      batch:batch_id (
+      batch:Coaching-3_StudentBatches!students_batch_tenant_fk (
         id,
         batch_name
       )
     `)
+      .eq("tenant_id", tenant.id)
       .order("student_id", { ascending: true });
 
     if (error) throw error;
@@ -116,23 +125,22 @@ const StudentManager = () => {
     setStudents(data || []);
 
     if (selectedStudent && data) {
-
       const updatedStudent = data.find(
         (student) => student.id === selectedStudent.id
       );
 
-      if (updatedStudent) {
-        setSelectedStudent(updatedStudent);
-      }
-
+      if (updatedStudent) setSelectedStudent(updatedStudent);
     }
   };
 
 
+  // ✅ Sahi Code:
   const fetchCourses = async () => {
+    if (!tenant?.id) return;
     const { data } = await supabase
       .from("Coaching-3_Courses")
       .select("id, course_name")
+      .eq("tenant_id", tenant.id) // <--- Add this
       .eq("status", "active")
       .order("course_name");
 
@@ -141,10 +149,13 @@ const StudentManager = () => {
     }
   };
 
+  // ✅ Sahi Code:
   const fetchBatches = async () => {
+    if (!tenant?.id) return;
     const { data } = await supabase
       .from("Coaching-3_StudentBatches")
       .select("id, batch_name, course_id")
+      .eq("tenant_id", tenant.id) // <--- Add this
       .eq("status", "active")
       .order("batch_name");
 
@@ -169,21 +180,34 @@ const StudentManager = () => {
   };
 
   useEffect(() => {
+    if (!tenant?.id) return;
+
     fetchAllData();
     fetchCourses();
     fetchBatches();
-  }, []);
+  }, [tenant?.id]);
 
   // ================================
   // Core Actions (Unchanged Logic)
   // ================================
   const approveStudent = async (id: string) => {
+    if (!tenant?.id) {
+      toast.error("Coaching tenant is not loaded.");
+      return;
+    }
     try {
       // STEP 1 -> Approval Request Fetch
       const { data: approval, error: approvalError } = await supabase
         .from("Coaching-3_StudentApprovals")
-        .select(`*,course:course_id (id,course_name)`)
+        .select(`
+  *,
+  course:Coaching-3_Courses!student_approvals_course_tenant_fk (
+    id,
+    course_name
+  )
+`)
         .eq("id", id)
+        .eq("tenant_id", tenant.id)
         .single();
 
       if (approvalError || !approval) throw new Error("Student request not found");
@@ -193,36 +217,39 @@ const StudentManager = () => {
       }
 
       // STEP 2 -> Check Student Exists
-      const { data: existingStudent } = await supabase
+      const {
+        data: existingStudent,
+        error: existingStudentError,
+      } = await supabase
         .from("Coaching-3_Students")
         .select("*")
+        .eq("tenant_id", tenant.id)
         .eq("user_id", approval.user_id)
         .maybeSingle();
+
+      if (existingStudentError) throw existingStudentError;
 
       // ==========================
       // NEW STUDENT
       // ==========================
       if (!existingStudent) {
 
-        const studentId = await generateStudentId();
+        const studentId = await generateStudentId(tenant.id)
 
         // Insert Student
         const { error: insertError } = await supabase
           .from("Coaching-3_Students")
           .insert({
+            tenant_id: tenant.id,
             student_id: studentId,
             user_id: approval.user_id,
             name: approval.name,
             email: approval.email,
             mobile: approval.mobile,
-
             batch: "Not Assigned",
-
             course_id: approval.course_id,
             batch_id: null,
-
             status: "active",
-
             notes_access: true,
             joined_at: new Date().toISOString().split("T")[0],
             updated_at: new Date().toISOString(),
@@ -248,7 +275,8 @@ const StudentManager = () => {
             notes_access: true,
             updated_at: new Date().toISOString(),
           })
-          .eq("user_id", approval.user_id);
+          .eq("user_id", approval.user_id)
+          .eq("tenant_id", tenant.id);
 
         if (updateStudentError) throw updateStudentError;
       }
@@ -262,7 +290,8 @@ const StudentManager = () => {
           status: "approved",
           updated_at: new Date().toISOString(),
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenant.id)
 
       if (approveError) throw approveError;
 
@@ -279,6 +308,10 @@ const StudentManager = () => {
 
 
   const rejectRequest = async (id: string) => {
+    if (!tenant?.id) {
+      toast.error("Coaching tenant is not loaded.");
+      return;
+    }
 
     if (!window.confirm("Reject this admission request?"))
       return;
@@ -291,7 +324,8 @@ const StudentManager = () => {
           status: "denied",
           updated_at: new Date().toISOString(),
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenant.id);
 
       if (error) throw error;
 
@@ -321,7 +355,8 @@ const StudentManager = () => {
           notes_access: false,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenant.id);
 
       if (error) throw error;
 
@@ -353,7 +388,8 @@ const StudentManager = () => {
           notes_access: newValue,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", student.id);
+        .eq("id", student.id)
+        .eq("tenant_id", tenant.id);
 
       if (error) throw error;
 
@@ -396,7 +432,8 @@ const StudentManager = () => {
           updated_at: new Date().toISOString(),
 
         })
-        .eq("id", student.id);
+        .eq("id", student.id)
+        .eq("tenant_id", tenant.id);
 
       if (error) throw error;
 
@@ -433,7 +470,8 @@ const StudentManager = () => {
           notes_access: true,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", student.id);
+        .eq("id", student.id)
+        .eq("tenant_id", tenant.id);
 
       if (error) throw error;
 
@@ -907,7 +945,7 @@ const StudentManager = () => {
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                 Manage student records, enrollments, and batches with ease.
+                  Manage student records, enrollments, and batches with ease.
                 </p>
               </div>
             </div>

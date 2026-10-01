@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useTenant } from "@/contexts/TenantContext";
 import { X, Users, Layers, CalendarCheck, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/supabaseClient";
@@ -7,101 +8,122 @@ import { updateBatchStudentCount } from "@/utils/batchUtils";
 import { getNextRollNumber } from "@/utils/rollNumberUtils";
 
 interface AssignBatchDrawerProps {
-    isOpen: boolean;
-    onClose: () => void;
-    student: any;
-    onAssigned: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  student: any;
+  onAssigned: () => void;
 }
 
 export default function AssignBatchDrawer({
-    isOpen,
-    onClose,
-    student,
-    onAssigned,
+  isOpen,
+  onClose,
+  student,
+  onAssigned,
 }: AssignBatchDrawerProps) {
-    const [batches, setBatches] = useState<any[]>([]);
-    const [selectedBatch, setSelectedBatch] = useState("");
+  const { tenant } = useTenant();
+  const [batches, setBatches] = useState<any[]>([]);
+  const [selectedBatch, setSelectedBatch] = useState("");
 
-    const fetchBatches = async () => {
-        if (!student?.course_id) {
-            setBatches([]);
-            return;
-        }
+  const fetchBatches = useCallback(async () => {
+    if (!tenant?.id || !student?.course_id) {
+      setBatches([]);
+      return;
+    }
 
-        const { data, error } = await supabase
-            .from("Coaching-3_StudentBatches")
-            .select("*")
-            .eq("course_id", student.course_id)
-            .eq("status", "active")
-            .order("batch_name");
+    const { data, error } = await supabase
+      .from("Coaching-3_StudentBatches")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .eq("course_id", student.course_id)
+      .eq("status", "active")
+      .order("batch_name");
 
-        if (!error && data) {
-            setBatches(data);
-        }
-    };
+    if (error) {
+      console.error("Failed to load batches:", error);
+      setBatches([]);
+      toast.error("Failed to load batches.");
+      return;
+    }
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchBatches();
-            setSelectedBatch("");
-        }
-    }, [isOpen, student]);
+    setBatches(data ?? []);
+  }, [tenant?.id, student?.course_id]);
 
-    if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
 
+    setSelectedBatch("");
+    void fetchBatches();
+  }, [isOpen, fetchBatches]);
 
-    const assignBatch = async () => {
-        if (!selectedBatch) {
-            toast.error("Please select a batch.");
-            return;
-        }
-        const oldBatchId = student.batch_id;
-        try {
-            const selected = batches.find(
-                (b) => b.id === selectedBatch
-            );
+  if (!isOpen) return null;
 
 
-            let rollNumber = student.roll_number;
-            if (oldBatchId !== selectedBatch) {
-                rollNumber = await getNextRollNumber(selectedBatch);
-            }
-            const { error } = await supabase
-                .from("Coaching-3_Students")
-                .update({
-                    batch_id: selectedBatch,
-                    batch: selected?.batch_name || "",
-                    roll_number: rollNumber,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq("id", student.id);
+  const assignBatch = async () => {
+    if (!tenant?.id || !student?.id) {
+      toast.error("Tenant or student information is missing.");
+      return;
+    }
+
+    if (!selectedBatch) {
+      toast.error("Please select a batch.");
+      return;
+    }
+
+    const selected = batches.find((batch) => batch.id === selectedBatch);
+
+    if (!selected) {
+      toast.error("Please select a valid batch.");
+      return;
+    }
+
+    const oldBatchId = student.batch_id;
+
+    try {
+      let rollNumber = student.roll_number;
+
+      if (oldBatchId !== selectedBatch) {
+        rollNumber = await getNextRollNumber(selectedBatch, tenant.id);
+      }
+
+      const { error } = await supabase
+        .from("Coaching-3_Students")
+        .update({
+          batch_id: selectedBatch,
+          batch: selected.batch_name || "",
+          roll_number: rollNumber,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", student.id)
+        .eq("tenant_id", tenant.id);
+
+      if (error) throw error;
+
+      // Update batch counts only after the student update succeeds.
+      if (oldBatchId && oldBatchId !== selectedBatch) {
+        await updateBatchStudentCount(oldBatchId, tenant.id);
+      }
+
+      if (oldBatchId !== selectedBatch) {
+        await updateBatchStudentCount(selectedBatch, tenant.id);
+      }
+
+      toast.success("Batch assigned successfully.");
+      onAssigned();
+      onClose();
+    } catch (error) {
+      console.error("Failed to assign batch:", error);
+      toast.error("Failed to assign batch.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to assign batch."
+      );
+    }
+  };
 
 
-            // Update old batch count
-            if (oldBatchId && oldBatchId !== selectedBatch) {
-                await updateBatchStudentCount(oldBatchId);
-            }
 
-            // Update new batch count
-            if (oldBatchId !== selectedBatch) {
-                await updateBatchStudentCount(selectedBatch);
-            }
-
-            if (error) throw error;
-
-            toast.success("Batch assigned successfully.");
-
-            onAssigned();
-
-            onClose();
-        } catch (err: any) {
-            toast.error(err.message);
-        }
-    };
-
-
-
-    return (
+  return (
     <>
       {/* Backdrop Overlay with Smooth Fade */}
       <div
@@ -111,7 +133,7 @@ export default function AssignBatchDrawer({
 
       {/* Drawer Side Panel */}
       <div className="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-slate-50 z-[70] shadow-2xl flex flex-col border-l border-slate-200 transition-transform duration-300 ease-in-out">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 bg-white border-b border-slate-200/80 shrink-0">
           <div className="flex items-center gap-3">
@@ -138,7 +160,7 @@ export default function AssignBatchDrawer({
 
         {/* Scrollable Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
-          
+
           {/* Student Info Card */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm">
             <p className="text-[11px] uppercase tracking-widest font-black text-slate-400 mb-3">
@@ -193,7 +215,7 @@ export default function AssignBatchDrawer({
                   </option>
                 ))}
               </select>
-              
+
               {/* Dropdown Chevron Icon */}
               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                 <CalendarCheck size={18} />
