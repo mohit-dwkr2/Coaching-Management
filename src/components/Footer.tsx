@@ -64,11 +64,11 @@ export default function Footer() {
               </li>
               <li className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
                 <Phone className="h-5 w-5 text-primary shrink-0" />
-                <a href="tel:+919876543210" className="text-slate-400 hover:text-white">+91 9630955951</a>
+                <a href="tel:+919876543210" className="text-slate-400 hover:text-white">+91 9630xxxxxx</a>
               </li>
               <li className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
                 <Mail className="h-5 w-5 text-primary shrink-0" />
-                <a href="mailto:samarpratapshri98@gmail.com" className="text-slate-400 hover:text-white">diwakarmohit0007@gmail.com</a>
+                <a href="mailto:samarpratapshri98@gmail.com" className="text-slate-400 hover:text-white">gmail@gmail.com</a>
               </li>
             </ul>
           </div>
@@ -80,7 +80,7 @@ export default function Footer() {
           <p className="text-white text-center md:text-left">
             © {currentYear} Your Academy. All rights reserved by Your academy  <br /><span className="text-xs md:text-xs py-2 text-gray-400"> Developed by {" "}
   <a
-    href="https://wa.me/919630955951"
+    href=""
     target="_blank"
     rel="noopener noreferrer"
     className="underline hover:text-primary"
