@@ -24,7 +24,7 @@ const About = () => {
       { label: "Years Excellence", value: "40+" },
     ],
 
-    directorName: "Mohit Diwakar",
+    directorName: "Mohit",
     directorTitle: "Founder & Managing Director",
     directorMsg: "Message From Director",
     directorQuote: '"At Toppers Academy, we don\'t just prepare you for exams; we prepare you for life. We focus on building a foundation so strong that no competition feels too difficult."',
